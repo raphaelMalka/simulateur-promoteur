@@ -1,0 +1,779 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Surface — Simulateur promoteur</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+
+:root{
+  --bg:#0B0B0F;
+  --surface:#17181D;
+  --surface-2:#1F2128;
+  --stroke:#2A2C34;
+  --text:#F5F6F8;
+  --text-dim:#8B8D96;
+  --text-faint:#5B5D66;
+  --accent-a:#8B5CF6;
+  --accent-b:#4C6FFF;
+  --mint:#00E6A8;
+  --coral:#FF6B6B;
+  --amber:#FFB020;
+  --gradient: linear-gradient(135deg, var(--accent-a) 0%, var(--accent-b) 100%);
+  --radius-l:28px;
+  --radius-m:18px;
+  --radius-s:12px;
+}
+
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;}
+body{
+  background:#000;
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  color:var(--text);
+  min-height:100vh;
+  display:flex;
+  align-items:flex-start;
+  justify-content:center;
+}
+
+.phone-shell{
+  width:100%;
+  max-width:430px;
+  min-height:100vh;
+  background:
+    radial-gradient(120% 60% at 50% -10%, rgba(139,92,246,0.20) 0%, rgba(139,92,246,0) 60%),
+    var(--bg);
+  position:relative;
+  overflow-x:hidden;
+  padding-bottom:40px;
+}
+
+@media (min-width:480px){
+  body{ padding:32px 16px; }
+  .phone-shell{
+    min-height:860px;
+    max-height:900px;
+    overflow-y:auto;
+    border-radius:44px;
+    box-shadow:0 0 0 8px #0a0a0c, 0 0 0 9px #2a2c34, 0 40px 90px -20px rgba(0,0,0,0.7);
+  }
+}
+
+/* status bar */
+.statusbar{
+  display:flex; justify-content:space-between; align-items:center;
+  padding:16px 26px 4px;
+  font-size:14px; font-weight:600; color:var(--text);
+}
+.statusbar .dot-group{display:flex; gap:5px; align-items:center;}
+
+/* header */
+.header{
+  padding:14px 22px 6px;
+}
+.eyebrow{
+  font-size:12px; font-weight:600; color:var(--text-dim);
+  text-transform:uppercase; letter-spacing:0.08em;
+}
+.title{
+  font-size:26px; font-weight:800; letter-spacing:-0.02em; margin:4px 0 0;
+}
+
+/* hero result card */
+.hero{
+  margin:18px 20px 8px;
+  border-radius:var(--radius-l);
+  padding:26px 24px 24px;
+  background:var(--gradient);
+  position:relative;
+  overflow:hidden;
+  box-shadow:0 20px 40px -18px rgba(76,111,255,0.55);
+}
+.hero::after{
+  content:"";
+  position:absolute; right:-40px; top:-60px;
+  width:180px; height:180px; border-radius:50%;
+  background:rgba(255,255,255,0.10);
+}
+.hero::before{
+  content:"";
+  position:absolute; left:-30px; bottom:-50px;
+  width:130px; height:130px; border-radius:50%;
+  background:rgba(255,255,255,0.08);
+}
+.hero-label{
+  font-size:13px; font-weight:600; color:rgba(255,255,255,0.85);
+  text-transform:uppercase; letter-spacing:0.06em;
+}
+.hero-value{
+  font-size:56px; font-weight:800; letter-spacing:-0.03em; color:#fff;
+  margin:6px 0 2px; line-height:1;
+  display:flex; align-items:baseline; gap:8px;
+}
+.hero-value .unit{ font-size:22px; font-weight:700; opacity:0.85;}
+.hero-sub{
+  font-size:13.5px; color:rgba(255,255,255,0.85); font-weight:500;
+  margin-top:10px; display:flex; align-items:center; gap:6px;
+}
+.hero-badge{
+  display:inline-flex; align-items:center; gap:5px;
+  background:rgba(0,0,0,0.18); padding:5px 10px; border-radius:20px;
+  font-size:12.5px; font-weight:700; color:#fff;
+}
+.hero-badge.warn{ background:rgba(0,0,0,0.28); }
+.hero-badge .pip{width:6px;height:6px;border-radius:50%;background:var(--mint);}
+.hero-badge.warn .pip{background:var(--coral);}
+
+/* section titles */
+.section-title{
+  padding:22px 22px 10px;
+  font-size:15px; font-weight:700; color:var(--text);
+  display:flex; justify-content:space-between; align-items:center;
+}
+.section-title .hint{ font-size:12px; font-weight:500; color:var(--text-faint);}
+
+/* card list */
+.card{
+  margin:0 20px;
+  background:var(--surface);
+  border:1px solid var(--stroke);
+  border-radius:var(--radius-m);
+  overflow:hidden;
+}
+.row{
+  padding:15px 18px;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:14px;
+  border-bottom:1px solid var(--stroke);
+}
+.row:last-child{ border-bottom:none; }
+.row-text{ flex:1; min-width:0; }
+.row-label{ font-size:14.5px; font-weight:600; color:var(--text); }
+.row-note{ font-size:11.5px; color:var(--text-faint); margin-top:2px; }
+
+.field{
+  display:flex; align-items:center; gap:2px;
+  background:var(--surface-2);
+  border:1px solid var(--stroke);
+  border-radius:12px;
+  padding:8px 12px;
+  min-width:118px;
+}
+.field input{
+  width:100%;
+  background:transparent; border:none; outline:none;
+  color:var(--text); font-family:'JetBrains Mono',monospace;
+  font-size:14.5px; font-weight:600; text-align:right;
+}
+.field .suffix{ font-size:12.5px; color:var(--text-dim); font-weight:600; white-space:nowrap;}
+
+/* sliders */
+.slider-row{ padding:14px 18px 16px; border-bottom:1px solid var(--stroke);}
+.slider-row:last-child{border-bottom:none;}
+.slider-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;}
+.slider-val{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14.5px; color:var(--mint);}
+input[type=range]{
+  -webkit-appearance:none; appearance:none;
+  width:100%; height:4px; border-radius:4px;
+  background:var(--stroke);
+  outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:20px; height:20px; border-radius:50%;
+  background:#fff;
+  box-shadow:0 2px 8px rgba(0,0,0,0.4), 0 0 0 5px rgba(139,92,246,0.35);
+  cursor:pointer;
+  margin-top:-8px;
+}
+input[type=range]::-moz-range-thumb{
+  width:20px; height:20px; border-radius:50%; border:none;
+  background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.4), 0 0 0 5px rgba(139,92,246,0.35); cursor:pointer;
+}
+
+/* breakdown */
+.breakdown-row{
+  padding:13px 18px;
+  display:flex; justify-content:space-between; align-items:center;
+  border-bottom:1px solid var(--stroke);
+  font-size:14px;
+}
+.breakdown-row:last-child{border-bottom:none;}
+.breakdown-row .k{ color:var(--text-dim); font-weight:500; }
+.breakdown-row .v{ font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--text);}
+.breakdown-row.total .k, .breakdown-row.total .v{ color:var(--text); font-weight:700; }
+.breakdown-row .v.pos{ color:var(--mint); }
+.breakdown-row .v.neg{ color:var(--coral); }
+
+/* toggle chip tabs for detail */
+.chip-toggle{
+  margin:14px 20px 0;
+  display:flex; background:var(--surface); border:1px solid var(--stroke);
+  border-radius:14px; padding:4px;
+}
+.chip-toggle button{
+  flex:1; border:none; background:transparent; color:var(--text-dim);
+  font-family:inherit; font-size:13.5px; font-weight:700; padding:10px 0;
+  border-radius:10px; cursor:pointer; transition:all .18s ease;
+}
+.chip-toggle button.active{
+  background:var(--surface-2); color:var(--text);
+  box-shadow:inset 0 0 0 1px var(--stroke);
+}
+
+.tabpane{ display:none; }
+.tabpane.active{ display:block; }
+
+/* ---- SAVE BLOCK ---- */
+.save-block{
+  margin:0 20px;
+  background:var(--surface);
+  border:1px solid var(--stroke);
+  border-radius:var(--radius-m);
+  padding:16px 18px 18px;
+  display:flex; gap:10px; align-items:stretch;
+}
+.save-input{
+  flex:1; min-width:0;
+  background:var(--surface-2);
+  border:1px solid var(--stroke);
+  border-radius:12px;
+  padding:0 14px;
+  color:var(--text);
+  font-family:inherit; font-size:14.5px; font-weight:500;
+  outline:none;
+}
+.save-input::placeholder{ color:var(--text-faint); }
+.save-input:focus{ border-color:var(--accent-a); }
+.primary-btn{
+  border:none;
+  background:var(--gradient);
+  color:#fff;
+  font-family:inherit; font-weight:700; font-size:14px;
+  padding:0 20px;
+  border-radius:12px;
+  cursor:pointer;
+  white-space:nowrap;
+  box-shadow:0 8px 20px -8px rgba(76,111,255,0.6);
+}
+.primary-btn:active{ transform:translateY(1px); }
+
+/* ---- SAVED LIST ---- */
+.saved-item{
+  padding:14px 18px;
+  display:flex; align-items:center; justify-content:space-between; gap:12px;
+  border-bottom:1px solid var(--stroke);
+}
+.saved-item:last-child{ border-bottom:none; }
+.si-main{ flex:1; min-width:0; }
+.si-name{
+  font-size:14.5px; font-weight:600; color:var(--text);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.si-meta{
+  font-size:11.5px; color:var(--text-faint);
+  font-family:'JetBrains Mono',monospace; margin-top:3px;
+}
+.si-meta .surf{ color:var(--mint); }
+.saved-actions{ display:flex; gap:8px; flex-shrink:0; }
+.mini-btn{
+  border:1px solid var(--stroke);
+  background:var(--surface-2);
+  color:var(--text-dim);
+  font-family:inherit; font-weight:600; font-size:12.5px;
+  padding:8px 12px; border-radius:10px; cursor:pointer;
+}
+.mini-btn.load{ color:var(--text); }
+.mini-btn.del{ color:var(--coral); border-color:rgba(255,107,107,0.35); }
+.mini-btn:active{ transform:translateY(1px); }
+.saved-empty{
+  padding:20px 18px; text-align:center;
+  font-size:12.5px; color:var(--text-faint);
+}
+
+.footnote{
+  margin:22px 22px 4px; font-size:11.5px; line-height:1.6; color:var(--text-faint);
+}
+.footnote b{ color:var(--text-dim); }
+
+.reset-bar{
+  margin:20px 20px 0; display:flex; justify-content:center;
+}
+.reset-btn{
+  background:var(--surface); border:1px solid var(--stroke); color:var(--text-dim);
+  font-family:inherit; font-weight:600; font-size:13px; padding:11px 22px; border-radius:14px;
+  cursor:pointer;
+}
+.reset-btn:active{ background:var(--surface-2); }
+
+/* toast */
+.toast{
+  position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
+  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text);
+  font-size:13.5px; font-weight:600; padding:12px 20px; border-radius:14px;
+  box-shadow:0 12px 30px -10px rgba(0,0,0,0.7);
+  opacity:0; pointer-events:none; transition:all .25s ease; z-index:50;
+}
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div class="phone-shell">
+
+  <div class="statusbar">
+    <span>9:41</span>
+    <div class="dot-group">
+      <span>●●●</span>
+    </div>
+  </div>
+
+  <div class="header">
+    <div class="eyebrow">Simulateur · Promotion Genève</div>
+    <div class="title">Surface à construire</div>
+  </div>
+
+  <!-- HERO RESULT -->
+  <div class="hero">
+    <div class="hero-label">Surface nécessaire</div>
+    <div class="hero-value"><span id="heroSurface">—</span><span class="unit">m² SBP</span></div>
+    <div class="hero-sub">
+      <span class="hero-badge" id="heroBadge"><span class="pip"></span><span id="heroBadgeText">calcul en cours</span></span>
+    </div>
+  </div>
+
+  <!-- INPUTS: MONTANTS -->
+  <div class="section-title">Montants<span class="hint">CHF</span></div>
+  <div class="card">
+    <div class="row">
+      <div class="row-text">
+        <div class="row-label">Terrain</div>
+        <div class="row-note">Prix d'achat</div>
+      </div>
+      <div class="field"><input id="in_terrain" type="text" inputmode="numeric" value="1'500'000"><span class="suffix">CHF</span></div>
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <div class="row-label">Coût de construction</div>
+        <div class="row-note">Par m² SBP</div>
+      </div>
+      <div class="field"><input id="in_cc" type="text" inputmode="numeric" value="4'000"><span class="suffix">/m²</span></div>
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <div class="row-label">Prix de vente</div>
+        <div class="row-note">Par m² SBP</div>
+      </div>
+      <div class="field"><input id="in_pv" type="text" inputmode="numeric" value="16'000"><span class="suffix">/m²</span></div>
+    </div>
+    <div class="row">
+      <div class="row-text">
+        <div class="row-label">Durée du projet</div>
+        <div class="row-note">Jusqu'à la vente</div>
+      </div>
+      <div class="field"><input id="in_duree" type="text" inputmode="numeric" value="3"><span class="suffix">ans</span></div>
+    </div>
+  </div>
+
+  <!-- INPUTS: TAUX -->
+  <div class="section-title">Taux &amp; financement<span class="hint">glisser pour ajuster</span></div>
+  <div class="card">
+    <div class="slider-row">
+      <div class="slider-top"><span class="row-label">Rendement annuel cible</span><span class="slider-val" id="val_cible">12.0%</span></div>
+      <input type="range" id="sl_cible" min="4" max="30" step="0.5" value="12">
+    </div>
+    <div class="slider-row">
+      <div class="slider-top"><span class="row-label">Frais d'acquisition terrain</span><span class="slider-val" id="val_fraisacq">4.0%</span></div>
+      <input type="range" id="sl_fraisacq" min="0" max="8" step="0.1" value="4">
+    </div>
+    <div class="slider-row">
+      <div class="slider-top"><span class="row-label">TVA construction</span><span class="slider-val" id="val_tva">8.1%</span></div>
+      <input type="range" id="sl_tva" min="0" max="12" step="0.1" value="8.1">
+    </div>
+    <div class="slider-row">
+      <div class="slider-top"><span class="row-label">Impôt sur le bénéfice (IS)</span><span class="slider-val" id="val_is">14.7%</span></div>
+      <input type="range" id="sl_is" min="0" max="30" step="0.1" value="14.7">
+    </div>
+    <div class="slider-row">
+      <div class="slider-top"><span class="row-label">Crédit bancaire construction</span><span class="slider-val" id="val_credit">80%</span></div>
+      <input type="range" id="sl_credit" min="0" max="100" step="5" value="80">
+    </div>
+    <div class="slider-row">
+      <div class="slider-top"><span class="row-label">Taux d'intérêt du crédit</span><span class="slider-val" id="val_taux">3.0%</span></div>
+      <input type="range" id="sl_taux" min="0" max="8" step="0.1" value="3">
+    </div>
+    <div class="slider-row">
+      <div class="slider-top"><span class="row-label">Utilisation moyenne du crédit</span><span class="slider-val" id="val_util">50%</span></div>
+      <input type="range" id="sl_util" min="0" max="100" step="5" value="50">
+    </div>
+  </div>
+
+  <!-- SAVE -->
+  <div class="section-title">Sauvegarder ce calcul<span class="hint">stocké dans le navigateur</span></div>
+  <div class="save-block">
+    <input class="save-input" id="saveName" type="text" placeholder="Nom du calcul (ex. Chêne-Bourg lot A)">
+    <button class="primary-btn" id="saveBtn">Enregistrer</button>
+  </div>
+
+  <!-- SAVED LIST -->
+  <div class="section-title">Calculs enregistrés<span class="hint" id="savedCount">0</span></div>
+  <div class="card">
+    <div class="saved-empty" id="savedEmpty">Aucun calcul enregistré pour l'instant.</div>
+    <div id="savedList"></div>
+  </div>
+
+  <!-- DETAIL TOGGLE -->
+  <div class="chip-toggle">
+    <button class="active" data-tab="verif">Vérification</button>
+    <button data-tab="notes">Hypothèses</button>
+  </div>
+
+  <div id="tab_verif" class="tabpane active">
+    <div class="section-title">Sur la base de la surface retenue<span class="hint" id="verifSurf">— m²</span></div>
+    <div class="card">
+      <div class="breakdown-row"><span class="k">Coût construction (incl. TVA)</span><span class="v" id="v_ccons">—</span></div>
+      <div class="breakdown-row"><span class="k">Coût terrain (frais compris)</span><span class="v" id="v_cterr">—</span></div>
+      <div class="breakdown-row total"><span class="k">Coût total du projet</span><span class="v" id="v_ctot">—</span></div>
+      <div class="breakdown-row"><span class="k">Financement bancaire</span><span class="v" id="v_fin">—</span></div>
+      <div class="breakdown-row"><span class="k">Apport en fonds propres</span><span class="v" id="v_apport">—</span></div>
+      <div class="breakdown-row"><span class="k">Intérêts intercalaires</span><span class="v neg" id="v_int">—</span></div>
+      <div class="breakdown-row"><span class="k">Chiffre d'affaires</span><span class="v" id="v_ca">—</span></div>
+      <div class="breakdown-row"><span class="k">Impôt sur les sociétés</span><span class="v neg" id="v_impot">—</span></div>
+      <div class="breakdown-row total"><span class="k">Résultat net</span><span class="v pos" id="v_rn">—</span></div>
+      <div class="breakdown-row total"><span class="k">Rendement annualisé obtenu</span><span class="v pos" id="v_rann">—</span></div>
+    </div>
+  </div>
+
+  <div id="tab_notes" class="tabpane">
+    <div class="section-title">Ce que ce modèle simplifie</div>
+    <div class="card">
+      <div class="row"><div class="row-text"><div class="row-note">Pas de plan de trésorerie semestriel — flux annuels agrégés, pas de TRI sur cash-flows réels.</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">Intérêts = crédit mobilisé × taux × durée × utilisation moyenne (tirage progressif approximé, pas de courbe de décaissement réelle).</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">TVA ajoutée au coût de construction, non récupérée.</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">Impôt personnel du promoteur (IBGI si personne physique) non calculé — seulement l'IS société.</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">Terrain payé 100% fonds propres, seule la construction est financée par la banque.</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">Aucun aléa de chantier, retard, ou taux de prévente modélisé.</div></div></div>
+    </div>
+  </div>
+
+  <div class="reset-bar">
+    <button class="reset-btn" id="resetBtn">Réinitialiser les valeurs par défaut</button>
+  </div>
+
+  <div class="footnote">
+    <b>Formule :</b> surface résolue algébriquement pour que le résultat net (après IS et intérêts) rapporte exactement le rendement annuel cible sur les fonds propres investis, composé sur la durée du projet.
+  </div>
+
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function parseNum(str){
+  return parseFloat(String(str).replace(/[^0-9.\-]/g,'')) || 0;
+}
+function fmtInt(n){
+  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+}
+function fmtCHF(n){
+  if(!isFinite(n)) return '—';
+  return fmtInt(n) + " CHF";
+}
+function fmtPct(n){
+  if(!isFinite(n)) return '—';
+  return (n*100).toFixed(1) + "%";
+}
+
+const numInputs = ['in_terrain','in_cc','in_pv','in_duree'];
+const sliders = {
+  cible:'sl_cible', fraisacq:'sl_fraisacq', tva:'sl_tva', is:'sl_is',
+  credit:'sl_credit', taux:'sl_taux', util:'sl_util'
+};
+
+function formatNumericField(el){
+  let raw = parseNum(el.value);
+  el.value = fmtInt(raw);
+}
+
+numInputs.forEach(id=>{
+  const el = $(id);
+  el.addEventListener('input', compute);
+  el.addEventListener('blur', ()=>{ formatNumericField(el); compute(); });
+});
+
+Object.entries(sliders).forEach(([key, id])=>{
+  $(id).addEventListener('input', ()=>{
+    $('val_'+key).textContent = parseFloat($(id).value).toFixed(1) + '%';
+    compute();
+  });
+});
+
+// tabs
+document.querySelectorAll('.chip-toggle button').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.chip-toggle button').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.tabpane').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    $('tab_'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+const DEFAULTS = {
+  in_terrain:"1'500'000", in_cc:"4'000", in_pv:"16'000", in_duree:"3",
+  sl_cible:12, sl_fraisacq:4, sl_tva:8.1, sl_is:14.7, sl_credit:80, sl_taux:3, sl_util:50
+};
+
+$('resetBtn').addEventListener('click', ()=>{
+  numInputs.forEach(id=> $(id).value = DEFAULTS[id]);
+  Object.entries(sliders).forEach(([key,id])=>{
+    $(id).value = DEFAULTS[id];
+    $('val_'+key).textContent = parseFloat(DEFAULTS[id]).toFixed(1)+'%';
+  });
+  compute();
+});
+
+/* ============================================================
+   SAUVEGARDE — localStorage
+   ============================================================ */
+const STORAGE_KEY = 'simulateur_promoteur_calculs_v1';
+
+function storageAvailable(){
+  try{
+    const t = '__test__';
+    localStorage.setItem(t, t);
+    localStorage.removeItem(t);
+    return true;
+  }catch(e){ return false; }
+}
+
+function loadAll(){
+  if(!storageAvailable()) return [];
+  try{
+    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+  }catch(e){ return []; }
+}
+
+function saveAll(arr){
+  if(!storageAvailable()) return false;
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
+    return true;
+  }catch(e){ return false; }
+}
+
+function getCurrentState(){
+  const inputs = {};
+  numInputs.forEach(id => inputs[id] = $(id).value);
+  const sl = {};
+  Object.values(sliders).forEach(id => sl[id] = $(id).value);
+  return { inputs, sliders: sl };
+}
+
+function applyState(state){
+  if(!state) return;
+  numInputs.forEach(id=>{
+    if(state.inputs && state.inputs[id] !== undefined) $(id).value = state.inputs[id];
+  });
+  Object.entries(sliders).forEach(([key,id])=>{
+    if(state.sliders && state.sliders[id] !== undefined){
+      $(id).value = state.sliders[id];
+      $('val_'+key).textContent = parseFloat(state.sliders[id]).toFixed(1)+'%';
+    }
+  });
+  compute();
+  window.scrollTo({ top:0, behavior:'smooth' });
+}
+
+let toastTimer = null;
+function toast(msg){
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(()=> t.classList.remove('show'), 2200);
+}
+
+function saveCalc(){
+  if(!storageAvailable()){
+    toast("Stockage indisponible ici — déploie l'app pour sauvegarder.");
+    return;
+  }
+  let name = $('saveName').value.trim();
+  if(!name){
+    name = 'Calcul du ' + new Date().toLocaleDateString('fr-CH');
+  }
+  const rec = {
+    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
+    name,
+    date: new Date().toISOString(),
+    state: getCurrentState(),
+    surface: $('heroSurface').textContent,
+    rann: $('v_rann').textContent
+  };
+  const all = loadAll();
+  all.unshift(rec);
+  saveAll(all);
+  $('saveName').value = '';
+  renderList();
+  toast('Calcul enregistré');
+}
+
+function deleteCalc(id){
+  const all = loadAll().filter(r => r.id !== id);
+  saveAll(all);
+  renderList();
+  toast('Calcul supprimé');
+}
+
+function renderList(){
+  const all = loadAll();
+  const list = $('savedList');
+  const empty = $('savedEmpty');
+  $('savedCount').textContent = all.length;
+  list.innerHTML = '';
+
+  if(all.length === 0){
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+
+  all.forEach(rec=>{
+    const item = document.createElement('div');
+    item.className = 'saved-item';
+
+    const main = document.createElement('div');
+    main.className = 'si-main';
+
+    const nameEl = document.createElement('div');
+    nameEl.className = 'si-name';
+    nameEl.textContent = rec.name;
+
+    const metaEl = document.createElement('div');
+    metaEl.className = 'si-meta';
+    const d = new Date(rec.date);
+    const dateStr = isNaN(d) ? '' :
+      d.toLocaleDateString('fr-CH') + ' ' +
+      d.toLocaleTimeString('fr-CH', {hour:'2-digit', minute:'2-digit'});
+    metaEl.innerHTML = '';
+    const surfSpan = document.createElement('span');
+    surfSpan.className = 'surf';
+    surfSpan.textContent = (rec.surface || '—') + ' m²';
+    metaEl.appendChild(surfSpan);
+    metaEl.appendChild(document.createTextNode(
+      ' · ' + (rec.rann || '—') + (dateStr ? ' · ' + dateStr : '')
+    ));
+
+    main.appendChild(nameEl);
+    main.appendChild(metaEl);
+
+    const actions = document.createElement('div');
+    actions.className = 'saved-actions';
+
+    const loadBtn = document.createElement('button');
+    loadBtn.className = 'mini-btn load';
+    loadBtn.textContent = 'Charger';
+    loadBtn.addEventListener('click', ()=> applyState(rec.state));
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'mini-btn del';
+    delBtn.textContent = 'Suppr.';
+    delBtn.addEventListener('click', ()=> deleteCalc(rec.id));
+
+    actions.appendChild(loadBtn);
+    actions.appendChild(delBtn);
+
+    item.appendChild(main);
+    item.appendChild(actions);
+    list.appendChild(item);
+  });
+}
+
+$('saveBtn').addEventListener('click', saveCalc);
+$('saveName').addEventListener('keydown', e=>{ if(e.key === 'Enter') saveCalc(); });
+
+/* ============================================================
+   CALCUL
+   ============================================================ */
+function compute(){
+  const terrain = parseNum($('in_terrain').value);
+  const cc = parseNum($('in_cc').value);
+  const pv = parseNum($('in_pv').value);
+  const duree = Math.max(parseNum($('in_duree').value), 0.1);
+
+  const cible = parseFloat($('sl_cible').value)/100;
+  const fraisAcq = parseFloat($('sl_fraisacq').value)/100;
+  const tva = parseFloat($('sl_tva').value)/100;
+  const is = parseFloat($('sl_is').value)/100;
+  const credit = parseFloat($('sl_credit').value)/100;
+  const taux = parseFloat($('sl_taux').value)/100;
+  const util = parseFloat($('sl_util').value)/100;
+
+  const tAcq = terrain*(1+fraisAcq);
+  const rc = Math.pow(1+cible, duree) - 1;
+  const K = cc*(1+tva)*(1 + credit*taux*duree*util);
+  const M = cc*(1+tva)*(1-credit);
+
+  const heroSurface = $('heroSurface');
+  const heroBadge = $('heroBadge');
+  const heroBadgeText = $('heroBadgeText');
+
+  let impossible = false, reason = '';
+  if(pv <= K){ impossible = true; reason = 'Prix de vente ≤ coût par m²'; }
+
+  const denom = (1-is)*(pv-K) - rc*M;
+  if(!impossible && denom <= 0){ impossible = true; reason = 'Objectif inatteignable'; }
+
+  if(impossible){
+    heroSurface.textContent = '—';
+    heroBadge.classList.add('warn');
+    heroBadgeText.textContent = reason;
+    ['v_ccons','v_cterr','v_ctot','v_fin','v_apport','v_int','v_ca','v_impot','v_rn','v_rann'].forEach(id=> $(id).textContent='—');
+    $('verifSurf').textContent = '— m²';
+    return;
+  }
+
+  const exact = tAcq*(rc+1-is) / denom;
+  const S = Math.ceil(exact);
+
+  heroSurface.textContent = fmtInt(S);
+  heroBadge.classList.remove('warn');
+  heroBadgeText.textContent = 'objectif atteignable';
+
+  // verification
+  const ccons = S*cc*(1+tva);
+  const cterr = tAcq;
+  const ctot = ccons + cterr;
+  const fin = ccons*credit;
+  const apport = ctot - fin;
+  const inter = fin*taux*duree*util;
+  const ca = S*pv;
+  const rai = ca - ctot - inter;
+  const impot = Math.max(rai,0)*is;
+  const rn = rai - impot;
+  const rtot = apport !== 0 ? rn/apport : NaN;
+  const rann = Math.pow(1+rtot, 1/duree) - 1;
+
+  $('verifSurf').textContent = fmtInt(S) + ' m²';
+  $('v_ccons').textContent = fmtCHF(ccons);
+  $('v_cterr').textContent = fmtCHF(cterr);
+  $('v_ctot').textContent = fmtCHF(ctot);
+  $('v_fin').textContent = fmtCHF(fin);
+  $('v_apport').textContent = fmtCHF(apport);
+  $('v_int').textContent = '−' + fmtCHF(inter);
+  $('v_ca').textContent = fmtCHF(ca);
+  $('v_impot').textContent = '−' + fmtCHF(impot);
+  $('v_rn').textContent = fmtCHF(rn);
+  $('v_rann').textContent = fmtPct(rann) + '/an';
+}
+
+compute();
+renderList();
+</script>
+
+</body>
+</html>
