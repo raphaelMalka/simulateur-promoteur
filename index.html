@@ -7,6 +7,19 @@
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
 
+/* Les dégradés CSS ne s'animent pas entre deux valeurs par défaut.
+   En déclarant les variables comme de vraies couleurs, le navigateur peut
+   les interpoler — la transition de teinte devient continue. */
+@property --accent-a { syntax:'<color>'; inherits:true; initial-value:#8A5AF6; }
+@property --accent-b { syntax:'<color>'; inherits:true; initial-value:#4D70FF; }
+@property --accent-halo { syntax:'<color>'; inherits:true; initial-value:rgba(138,90,246,0.20); }
+@property --accent-glow { syntax:'<color>'; inherits:true; initial-value:rgba(77,112,255,0.60); }
+
+html{
+  transition: --accent-a .40s ease, --accent-b .40s ease,
+              --accent-halo .40s ease, --accent-glow .40s ease;
+}
+
 :root{
   --bg:#0B0B0F;
   --surface:#17181D;
@@ -17,486 +30,1099 @@
   --text-faint:#5B5D66;
   --accent-a:#8B5CF6;
   --accent-b:#4C6FFF;
-  --mint:#00E6A8;
-  --coral:#FF6B6B;
-  --amber:#FFB020;
+  --mint:#3FD3A3;
+  --coral:#F4736C;
+  --amber:#E9A63E;
+  /* segments de la cascade : famille violette de l'app, du plus lourd au plus léger */
+  --wf-1:#6D5BF8; --wf-2:#9B5CF6; --wf-3:#C39BFB;
+  --wf-4:#7C86F0; --wf-5:#5E7CE8; --wf-6:#4B5473; --wf-7:#3FD3A3;
+  --peek-h: 92px;
+  --accent-glow: rgba(76,111,255,0.6);
+  --accent-halo: rgba(139,92,246,0.20);
   --gradient: linear-gradient(135deg, var(--accent-a) 0%, var(--accent-b) 100%);
+  --gradient-warn: linear-gradient(135deg, #3A3C46 0%, #24252C 100%);
   --radius-l:28px;
   --radius-m:18px;
   --radius-s:12px;
+  --bubble-shadow:0 12px 30px rgba(0,0,0,0.45);
+}
+
+html[data-theme="light"]{
+  --bg:#F3F4F8;
+  --surface:#FFFFFF;
+  --surface-2:#F0F1F5;
+  --stroke:#E4E6EC;
+  --text:#14151A;
+  --text-dim:#6B6D78;
+  --text-faint:#9A9CA6;
+  --bubble-shadow:0 12px 30px rgba(20,21,26,0.18);
+  /* sur fond blanc, les teintes vives deviennent illisibles : versions assombries */
+  --mint:#0E9D6E;
+  --coral:#D4504A;
+  --amber:#B0741A;
+  --wf-1:#5B4AE0; --wf-2:#8A47E0; --wf-3:#B183E8;
+  --wf-4:#6673D8; --wf-5:#4F6AD0; --wf-6:#5A6480; --wf-7:#0E9D6E;
 }
 
 *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-html,body{margin:0;padding:0;}
+html,body{margin:0;padding:0;height:100%;}
 body{
   background:#000;
   font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
   color:var(--text);
-  min-height:100vh;
+  min-height:100%;
   display:flex;
   align-items:flex-start;
   justify-content:center;
 }
 
-.phone-shell{
+.phone-frame{
   width:100%;
   max-width:430px;
-  min-height:100vh;
+  height:100vh;
+  height:100dvh;
+  position:relative;
+}
+
+.phone-shell{
+  width:100%;
+  height:100%;
   background:
-    radial-gradient(120% 60% at 50% -10%, rgba(139,92,246,0.20) 0%, rgba(139,92,246,0) 60%),
+    radial-gradient(120% 60% at 50% -10%, var(--accent-halo) 0%, transparent 60%),
     var(--bg);
   position:relative;
+  overflow-y:auto;
   overflow-x:hidden;
   padding-bottom:40px;
+  transition:background .25s ease;
 }
 
 @media (min-width:480px){
   body{ padding:32px 16px; }
-  .phone-shell{
-    min-height:860px;
-    max-height:900px;
-    overflow-y:auto;
+  .phone-frame{
     border-radius:44px;
+    overflow:hidden;
     box-shadow:0 0 0 8px #0a0a0c, 0 0 0 9px #2a2c34, 0 40px 90px -20px rgba(0,0,0,0.7);
   }
 }
 
 /* status bar */
-.statusbar{
-  display:flex; justify-content:space-between; align-items:center;
-  padding:16px 26px 4px;
-  font-size:14px; font-weight:600; color:var(--text);
-}
-.statusbar .dot-group{display:flex; gap:5px; align-items:center;}
+.statusbar{ display:flex; justify-content:space-between; align-items:center; padding:16px 26px 4px; font-size:14px; font-weight:600; color:var(--text); }
 
 /* header */
-.header{
-  padding:14px 22px 6px;
+.header-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:26px 22px 6px; }
+.eyebrow{ font-size:12px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; }
+.title{ font-size:26px; font-weight:800; letter-spacing:-0.02em; margin:4px 0 0; }
+.header-actions{ display:flex; gap:8px; margin-top:2px; flex-shrink:0; }
+.icon-btn{
+  width:36px; height:36px; border-radius:12px;
+  background:var(--surface); border:1px solid var(--stroke);
+  display:flex; align-items:center; justify-content:center;
+  color:var(--text-dim); cursor:pointer; font-size:16px;
+  transition:background .15s ease;
 }
-.eyebrow{
-  font-size:12px; font-weight:600; color:var(--text-dim);
-  text-transform:uppercase; letter-spacing:0.08em;
+.icon-btn:active{ background:var(--surface-2); }
+.icon-btn .icon-moon{ display:none; }
+html[data-theme="light"] .icon-btn .icon-sun{ display:none; }
+html[data-theme="light"] .icon-btn .icon-moon{ display:inline; }
+
+/* mode toggle */
+.mode-toggle{ position:relative; margin:16px 20px 0; display:flex; gap:0; background:var(--surface); border:1px solid var(--stroke); border-radius:16px; padding:4px; }
+.mode-thumb{
+  position:absolute; top:4px; bottom:4px; left:4px;
+  width:calc((100% - 8px)/3);
+  border-radius:12px;
+  background:var(--gradient);
+  box-shadow:0 8px 18px -8px var(--accent-glow);
+  transition:transform .32s cubic-bezier(.4,0,.2,1), background .32s ease, box-shadow .32s ease;
+  z-index:0;
 }
-.title{
-  font-size:26px; font-weight:800; letter-spacing:-0.02em; margin:4px 0 0;
+.mode-toggle button{ position:relative; z-index:1; flex:1; border:none; background:transparent; color:var(--text-dim); font-family:inherit; font-size:12.5px; font-weight:700; padding:11px 2px; border-radius:12px; cursor:pointer; transition:color .25s ease; line-height:1.25; white-space:nowrap; }
+.mode-toggle button.active{ color:#fff; }
+
+/* palettes par mode — même axe violet, décalage de teinte de 18° entre modes */
+html[data-mode="objectif"]{
+  --accent-a:#8A5AF6; --accent-b:#4D70FF; --accent-glow:rgba(77,112,255,0.60); --accent-halo:rgba(138,90,246,0.20);
+}
+html[data-mode="surface"]{
+  --accent-a:#B75FF2; --accent-b:#6B5BFB; --accent-glow:rgba(107,91,251,0.58); --accent-halo:rgba(183,95,242,0.20);
+}
+html[data-mode="terrain"]{
+  --accent-a:#DE65EC; --accent-b:#995AF6; --accent-glow:rgba(153,90,246,0.58); --accent-halo:rgba(222,101,236,0.19);
 }
 
-/* hero result card */
-.hero{
-  margin:18px 20px 8px;
-  border-radius:var(--radius-l);
-  padding:26px 24px 24px;
-  background:var(--gradient);
-  position:relative;
-  overflow:hidden;
-  box-shadow:0 20px 40px -18px rgba(76,111,255,0.55);
-}
-.hero::after{
-  content:"";
-  position:absolute; right:-40px; top:-60px;
-  width:180px; height:180px; border-radius:50%;
-  background:rgba(255,255,255,0.10);
-}
-.hero::before{
-  content:"";
-  position:absolute; left:-30px; bottom:-50px;
-  width:130px; height:130px; border-radius:50%;
-  background:rgba(255,255,255,0.08);
-}
-.hero-label{
-  font-size:13px; font-weight:600; color:rgba(255,255,255,0.85);
-  text-transform:uppercase; letter-spacing:0.06em;
-}
-.hero-value{
-  font-size:56px; font-weight:800; letter-spacing:-0.03em; color:#fff;
-  margin:6px 0 2px; line-height:1;
-  display:flex; align-items:baseline; gap:8px;
-}
-.hero-value .unit{ font-size:22px; font-weight:700; opacity:0.85;}
-.hero-sub{
-  font-size:13.5px; color:rgba(255,255,255,0.85); font-weight:500;
-  margin-top:10px; display:flex; align-items:center; gap:6px;
-}
-.hero-badge{
-  display:inline-flex; align-items:center; gap:5px;
-  background:rgba(0,0,0,0.18); padding:5px 10px; border-radius:20px;
-  font-size:12.5px; font-weight:700; color:#fff;
-}
+/* hero */
+.hero{ margin:14px 20px 8px; border-radius:var(--radius-l); padding:26px 24px 24px; background:var(--gradient); position:sticky; top:10px; z-index:55; overflow:hidden; box-shadow:0 20px 40px -18px var(--accent-glow); transition:background .35s ease, box-shadow .35s ease; }
+.hero.warn{ background:var(--gradient-warn); box-shadow:0 20px 40px -18px rgba(0,0,0,0.5); }
+.hero::after{ content:""; position:absolute; right:-40px; top:-60px; width:180px; height:180px; border-radius:50%; background:rgba(255,255,255,0.10); }
+.hero::before{ content:""; position:absolute; left:-30px; bottom:-50px; width:130px; height:130px; border-radius:50%; background:rgba(255,255,255,0.08); }
+.hero-label{ font-size:13px; font-weight:600; color:rgba(255,255,255,0.85); text-transform:uppercase; letter-spacing:0.06em; }
+.hero-value{ font-size:52px; font-weight:800; letter-spacing:-0.03em; color:#fff; margin:6px 0 2px; line-height:1; display:flex; align-items:baseline; gap:8px; font-family:'JetBrains Mono',monospace; }
+.hero-value .unit{ font-size:20px; font-weight:700; opacity:0.85; font-family:'Inter',sans-serif;}
+.hero-sub{ font-size:13.5px; color:rgba(255,255,255,0.85); font-weight:500; margin-top:10px; }
+.hero-badge{ display:inline-flex; align-items:center; gap:5px; background:rgba(0,0,0,0.18); padding:5px 10px; border-radius:20px; font-size:12.5px; font-weight:700; color:#fff; }
 .hero-badge.warn{ background:rgba(0,0,0,0.28); }
 .hero-badge .pip{width:6px;height:6px;border-radius:50%;background:var(--mint);}
 .hero-badge.warn .pip{background:var(--coral);}
 
-/* section titles */
-.section-title{
-  padding:22px 22px 10px;
-  font-size:15px; font-weight:700; color:var(--text);
-  display:flex; justify-content:space-between; align-items:center;
-}
-.section-title .hint{ font-size:12px; font-weight:500; color:var(--text-faint);}
+.section-title{ padding:22px 22px 10px; font-size:15px; font-weight:700; color:var(--text); display:flex; justify-content:space-between; align-items:center; gap:10px; }
+.section-title .hint{ font-size:12px; font-weight:500; color:var(--text-faint); white-space:nowrap; }
+.section-title-right{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
 
-/* card list */
-.card{
-  margin:0 20px;
-  background:var(--surface);
-  border:1px solid var(--stroke);
-  border-radius:var(--radius-m);
-  overflow:hidden;
-}
-.row{
-  padding:15px 18px;
-  display:flex; align-items:center; justify-content:space-between;
-  gap:14px;
-  border-bottom:1px solid var(--stroke);
-}
-.row:last-child{ border-bottom:none; }
+.card{ margin:0 20px; background:var(--surface); border:1px solid var(--stroke); border-radius:var(--radius-m); overflow:visible; transition:opacity .2s ease; }
+.row{ padding:15px 18px; display:flex; align-items:center; justify-content:space-between; gap:14px; border-bottom:1px solid var(--stroke); }
+.row:first-child{ border-radius:var(--radius-m) var(--radius-m) 0 0; }
+.row:last-child{ border-bottom:none; border-radius:0 0 var(--radius-m) var(--radius-m); }
+.row.hidden{ display:none; }
 .row-text{ flex:1; min-width:0; }
-.row-label{ font-size:14.5px; font-weight:600; color:var(--text); }
+.row-label{ font-size:14.5px; font-weight:600; color:var(--text); display:flex; align-items:center; transition:color .2s ease; }
 .row-note{ font-size:11.5px; color:var(--text-faint); margin-top:2px; }
 
-.field{
-  display:flex; align-items:center; gap:2px;
-  background:var(--surface-2);
-  border:1px solid var(--stroke);
-  border-radius:12px;
-  padding:8px 12px;
-  min-width:118px;
-}
-.field input{
-  width:100%;
-  background:transparent; border:none; outline:none;
-  color:var(--text); font-family:'JetBrains Mono',monospace;
-  font-size:14.5px; font-weight:600; text-align:right;
-}
-.field .suffix{ font-size:12.5px; color:var(--text-dim); font-weight:600; white-space:nowrap;}
+.field{ display:flex; align-items:center; gap:2px; background:var(--surface-2); border:1px solid var(--stroke); border-radius:12px; padding:8px 12px; min-width:128px; }
+.field input{ width:100%; background:transparent; border:none; outline:none; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:600; text-align:right; transition:color .2s ease; }
+.field input:disabled{ color:var(--text-faint); cursor:not-allowed; }
+.field .suffix{ font-size:12px; color:var(--text-dim); font-weight:600; white-space:nowrap;}
 
-/* sliders */
+.lock-btn{ width:28px; height:28px; border-radius:9px; background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; flex-shrink:0; }
+.lock-btn:active{ background:var(--stroke); }
+
+.locked-pill{ display:flex; align-items:center; gap:7px; background:var(--surface-2); border:1px solid var(--stroke); border-radius:12px; padding:8px 12px; font-family:'JetBrains Mono',monospace; font-weight:600; font-size:14px; color:var(--text-dim); min-width:70px; justify-content:center; }
+
+.alert-box{
+  display:none; margin:10px 20px 0; padding:12px 14px;
+  background:rgba(255,176,32,0.12); border:1px solid rgba(255,176,32,0.35);
+  border-radius:14px; font-size:12.5px; line-height:1.45; color:var(--amber);
+  align-items:flex-start; gap:9px; font-weight:500;
+}
+.alert-box.show{ display:flex; }
+.alert-icon{ flex-shrink:0; font-size:13px; }
+
+.surface-control{ display:flex; align-items:center; gap:8px; }
+.max-btn{
+  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim);
+  font-family:inherit; font-weight:700; font-size:11.5px; padding:8px 11px;
+  border-radius:10px; cursor:pointer; flex-shrink:0;
+}
+.max-btn:active{ background:var(--stroke); }
+
+/* locked card state: gray everything out */
+.card.locked .row-label,
+.card.locked .slider-val,
+.card.locked .row-note{ color:var(--text-faint) !important; }
+.card.locked input[type=range]{ opacity:.45; cursor:not-allowed; }
+.card.locked input[type=range]::-webkit-slider-thumb{ box-shadow:0 2px 8px rgba(0,0,0,0.3), 0 0 0 5px rgba(139,141,150,0.25); }
+.card.locked .field{ opacity:.55; }
+
 .slider-row{ padding:14px 18px 16px; border-bottom:1px solid var(--stroke);}
-.slider-row:last-child{border-bottom:none;}
-.slider-top{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px;}
-.slider-val{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14.5px; color:var(--mint);}
-input[type=range]{
-  -webkit-appearance:none; appearance:none;
-  width:100%; height:4px; border-radius:4px;
-  background:var(--stroke);
-  outline:none;
-}
-input[type=range]::-webkit-slider-thumb{
-  -webkit-appearance:none;
-  width:20px; height:20px; border-radius:50%;
-  background:#fff;
-  box-shadow:0 2px 8px rgba(0,0,0,0.4), 0 0 0 5px rgba(139,92,246,0.35);
-  cursor:pointer;
-  margin-top:-8px;
-}
-input[type=range]::-moz-range-thumb{
-  width:20px; height:20px; border-radius:50%; border:none;
-  background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.4), 0 0 0 5px rgba(139,92,246,0.35); cursor:pointer;
-}
+.slider-row:first-child{ border-radius:var(--radius-m) var(--radius-m) 0 0; }
+.slider-row:last-child{border-bottom:none; border-radius:0 0 var(--radius-m) var(--radius-m);}
+.slider-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px;}
+.slider-top .row-label{ flex:1; min-width:0; }
+.slider-val{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14.5px; color:var(--mint); flex-shrink:0; white-space:nowrap; padding-top:1px;}
+input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:4px; background:var(--stroke); outline:none; }
+input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.4), 0 0 0 5px var(--accent-halo); cursor:pointer; margin-top:-8px; }
+input[type=range]::-moz-range-thumb{ width:20px; height:20px; border-radius:50%; border:none; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.4), 0 0 0 5px var(--accent-halo); cursor:pointer; }
 
-/* breakdown */
-.breakdown-row{
-  padding:13px 18px;
-  display:flex; justify-content:space-between; align-items:center;
-  border-bottom:1px solid var(--stroke);
-  font-size:14px;
-}
-.breakdown-row:last-child{border-bottom:none;}
-.breakdown-row .k{ color:var(--text-dim); font-weight:500; }
+.breakdown-row{ padding:13px 18px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--stroke); font-size:14px; }
+.breakdown-row:first-child{ border-radius:var(--radius-m) var(--radius-m) 0 0; }
+.breakdown-row:last-child{border-bottom:none; border-radius:0 0 var(--radius-m) var(--radius-m);}
+.breakdown-row .k{ color:var(--text-dim); font-weight:500; display:flex; align-items:center; }
 .breakdown-row .v{ font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--text);}
 .breakdown-row.total .k, .breakdown-row.total .v{ color:var(--text); font-weight:700; }
 .breakdown-row .v.pos{ color:var(--mint); }
 .breakdown-row .v.neg{ color:var(--coral); }
 
-/* toggle chip tabs for detail */
-.chip-toggle{
-  margin:14px 20px 0;
-  display:flex; background:var(--surface); border:1px solid var(--stroke);
-  border-radius:14px; padding:4px;
-}
-.chip-toggle button{
-  flex:1; border:none; background:transparent; color:var(--text-dim);
-  font-family:inherit; font-size:13.5px; font-weight:700; padding:10px 0;
-  border-radius:10px; cursor:pointer; transition:all .18s ease;
-}
-.chip-toggle button.active{
-  background:var(--surface-2); color:var(--text);
-  box-shadow:inset 0 0 0 1px var(--stroke);
-}
+.chip-toggle{ margin:14px 20px 0; display:flex; background:var(--surface); border:1px solid var(--stroke); border-radius:14px; padding:4px; }
+.chip-toggle button{ flex:1; border:none; background:transparent; color:var(--text-dim); font-family:inherit; font-size:13.5px; font-weight:700; padding:10px 0; border-radius:10px; cursor:pointer; transition:all .18s ease; }
+.chip-toggle button.active{ background:var(--surface-2); color:var(--text); box-shadow:inset 0 0 0 1px var(--stroke); }
 
 .tabpane{ display:none; }
 .tabpane.active{ display:block; }
 
-/* ---- SAVE BLOCK ---- */
-.save-block{
-  margin:0 20px;
-  background:var(--surface);
-  border:1px solid var(--stroke);
-  border-radius:var(--radius-m);
-  padding:16px 18px 18px;
-  display:flex; gap:10px; align-items:stretch;
-}
-.save-input{
-  flex:1; min-width:0;
-  background:var(--surface-2);
-  border:1px solid var(--stroke);
-  border-radius:12px;
-  padding:0 14px;
-  color:var(--text);
-  font-family:inherit; font-size:14.5px; font-weight:500;
-  outline:none;
-}
-.save-input::placeholder{ color:var(--text-faint); }
-.save-input:focus{ border-color:var(--accent-a); }
-.primary-btn{
-  border:none;
-  background:var(--gradient);
-  color:#fff;
-  font-family:inherit; font-weight:700; font-size:14px;
-  padding:0 20px;
-  border-radius:12px;
-  cursor:pointer;
-  white-space:nowrap;
-  box-shadow:0 8px 20px -8px rgba(76,111,255,0.6);
-}
-.primary-btn:active{ transform:translateY(1px); }
-
-/* ---- SAVED LIST ---- */
-.saved-item{
-  padding:14px 18px;
-  display:flex; align-items:center; justify-content:space-between; gap:12px;
-  border-bottom:1px solid var(--stroke);
-}
-.saved-item:last-child{ border-bottom:none; }
-.si-main{ flex:1; min-width:0; }
-.si-name{
-  font-size:14.5px; font-weight:600; color:var(--text);
-  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
-}
-.si-meta{
-  font-size:11.5px; color:var(--text-faint);
-  font-family:'JetBrains Mono',monospace; margin-top:3px;
-}
-.si-meta .surf{ color:var(--mint); }
-.saved-actions{ display:flex; gap:8px; flex-shrink:0; }
-.mini-btn{
-  border:1px solid var(--stroke);
-  background:var(--surface-2);
-  color:var(--text-dim);
-  font-family:inherit; font-weight:600; font-size:12.5px;
-  padding:8px 12px; border-radius:10px; cursor:pointer;
-}
-.mini-btn.load{ color:var(--text); }
-.mini-btn.del{ color:var(--coral); border-color:rgba(255,107,107,0.35); }
-.mini-btn:active{ transform:translateY(1px); }
-.saved-empty{
-  padding:20px 18px; text-align:center;
-  font-size:12.5px; color:var(--text-faint);
-}
-
-.footnote{
-  margin:22px 22px 4px; font-size:11.5px; line-height:1.6; color:var(--text-faint);
-}
+.footnote{ margin:22px 22px 4px; font-size:11.5px; line-height:1.6; color:var(--text-faint); }
 .footnote b{ color:var(--text-dim); }
+.save-note{ margin:10px 22px 0; font-size:11px; color:var(--text-faint); display:flex; align-items:center; gap:6px; justify-content:center; }
+.save-note .dot{ width:5px; height:5px; border-radius:50%; background:var(--mint); }
 
-.reset-bar{
-  margin:20px 20px 0; display:flex; justify-content:center;
-}
-.reset-btn{
-  background:var(--surface); border:1px solid var(--stroke); color:var(--text-dim);
-  font-family:inherit; font-weight:600; font-size:13px; padding:11px 22px; border-radius:14px;
-  cursor:pointer;
-}
+.reset-bar{ margin:20px 20px 0; display:flex; justify-content:center; }
+.reset-btn{ background:var(--surface); border:1px solid var(--stroke); color:var(--text-dim); font-family:inherit; font-weight:600; font-size:13px; padding:11px 22px; border-radius:14px; cursor:pointer; }
 .reset-btn:active{ background:var(--surface-2); }
 
-/* toast */
-.toast{
-  position:fixed; left:50%; bottom:28px; transform:translateX(-50%) translateY(20px);
-  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text);
-  font-size:13.5px; font-weight:600; padding:12px 20px; border-radius:14px;
-  box-shadow:0 12px 30px -10px rgba(0,0,0,0.7);
-  opacity:0; pointer-events:none; transition:all .25s ease; z-index:50;
+.final-save-bar{ margin:26px 20px 0; }
+.final-save-btn{
+  width:100%; background:var(--gradient); color:#fff; border:none;
+  border-radius:16px; padding:16px; font-family:inherit; font-weight:700; font-size:15px;
+  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
+  box-shadow:0 14px 30px -12px var(--accent-glow); transition:background .35s ease, box-shadow .35s ease;
 }
-.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+.final-save-btn:active{ transform:scale(0.98); }
+
+/* tooltip */
+.tip{ position:relative; display:inline-flex; margin-left:6px; }
+.tip .icon{
+  width:15px; height:15px; border-radius:50%;
+  background:var(--surface-2); border:1px solid var(--stroke);
+  color:var(--text-faint); font-size:10px; font-weight:700;
+  display:flex; align-items:center; justify-content:center;
+  cursor:help; line-height:1; user-select:none;
+}
+.tip .bubble{
+  position:absolute; left:0; bottom:calc(100% + 8px);
+  width:208px; max-width:60vw;
+  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text);
+  font-size:11.5px; line-height:1.45; font-weight:500;
+  padding:10px 12px; border-radius:10px;
+  box-shadow:var(--bubble-shadow);
+  opacity:0; transform:translateY(4px);
+  pointer-events:none; transition:opacity .15s ease, transform .15s ease;
+  z-index:80; text-transform:none;
+}
+.tip:hover .bubble, .tip:focus .bubble, .tip:focus-within .bubble{ opacity:1; transform:translateY(0); pointer-events:auto; }
+
+/* history sheet */
+.sheet-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,0.55); opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:90; }
+.sheet-backdrop.open{ opacity:1; pointer-events:auto; }
+.sheet{
+  position:absolute; left:0; right:0; bottom:0;
+  background:var(--surface); border-top:1px solid var(--stroke);
+  border-radius:24px 24px 0 0; max-height:72%;
+  display:flex; flex-direction:column; overflow:hidden;
+  transform:translateY(100%); transition:transform .25s ease;
+  z-index:91; box-shadow:0 -20px 50px rgba(0,0,0,0.4);
+}
+.sheet.open{ transform:translateY(0); }
+.sheet-handle{ width:36px; height:4px; border-radius:4px; background:var(--stroke); margin:10px auto 2px; flex-shrink:0; }
+.sheet-header{ display:flex; justify-content:space-between; align-items:center; padding:10px 20px 12px; flex-shrink:0; }
+.sheet-title{ font-size:16px; font-weight:700; }
+.sheet-close{ width:30px; height:30px; border-radius:10px; background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; }
+.sheet-save-btn{ margin:0 20px 16px; background:var(--gradient); color:#fff; border:none; border-radius:14px; padding:13px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; flex-shrink:0; }
+.sheet-list{ overflow-y:auto; flex:1; min-height:0; padding:0 12px 24px; }
+.hist-item{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 10px; border-bottom:1px solid var(--stroke); cursor:pointer; }
+.hist-item:last-child{ border-bottom:none; }
+.hist-main{ flex:1; min-width:0; }
+.hist-label{ font-size:14px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hist-date{ font-size:11.5px; color:var(--text-faint); margin-top:2px; }
+.hist-del{ width:30px; height:30px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--text-faint); background:transparent; border:none; cursor:pointer; flex-shrink:0; }
+.hist-del:active{ background:var(--surface-2); }
+.hist-empty{ padding:34px 20px; text-align:center; color:var(--text-faint); font-size:13px; }
+
+/* name project modal */
+.modal-backdrop{
+  position:absolute; inset:0; background:rgba(0,0,0,0.6);
+  display:flex; align-items:center; justify-content:center; padding:24px;
+  opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:100;
+}
+.modal-backdrop.open{ opacity:1; pointer-events:auto; }
+.modal-box{
+  width:100%; max-width:320px; background:var(--surface); border:1px solid var(--stroke);
+  border-radius:20px; padding:20px; box-shadow:0 24px 60px rgba(0,0,0,0.5);
+  transform:scale(0.94) translateY(6px); transition:transform .2s ease;
+}
+.modal-backdrop.open .modal-box{ transform:scale(1) translateY(0); }
+.modal-title{ font-size:16px; font-weight:700; color:var(--text); margin-bottom:14px; }
+.modal-input{
+  width:100%; background:var(--surface-2); border:1px solid var(--stroke); border-radius:12px;
+  padding:12px 14px; font-family:inherit; font-size:14.5px; font-weight:600; color:var(--text);
+  outline:none; box-sizing:border-box;
+}
+.modal-input:focus{ border-color:var(--accent-b); }
+.modal-actions{ display:flex; gap:10px; margin-top:16px; }
+.modal-btn{ flex:1; border:none; border-radius:12px; padding:12px; font-family:inherit; font-weight:700; font-size:13.5px; cursor:pointer; }
+.modal-btn.ghost{ background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim); }
+.modal-btn.ghost:active{ background:var(--stroke); }
+.modal-btn.primary{ background:var(--gradient); color:#fff; }
+.modal-btn.primary:active{ transform:scale(0.98); }
+
+/* --- bloc Résultat mis en avant --- */
+.result-card{ border-color:var(--accent-b); box-shadow:0 0 0 1px var(--accent-b), 0 12px 30px -18px var(--accent-glow); }
+.result-main{ display:flex; gap:0; border-bottom:1px solid var(--stroke); }
+.result-block{ flex:1; padding:16px 18px; }
+.result-block + .result-block{ border-left:1px solid var(--stroke); }
+.result-label{ font-size:11.5px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; }
+.result-value{ font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; color:var(--text); margin-top:6px; letter-spacing:-0.02em; }
+.result-value.accent{ color:var(--mint); }
+
+/* sous-totaux dans les listes */
+.breakdown-row.subtotal{ background:var(--surface-2); }
+.breakdown-row.subtotal .k, .breakdown-row.subtotal .v{ color:var(--text); font-weight:700; }
+
+/* --- jauge surface / max constructible --- */
+.gauge-row{ padding-top:12px; padding-bottom:15px; }
+.gauge-wrap{ width:100%; }
+.gauge-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; gap:10px; }
+.gauge-label{ font-size:12px; font-weight:600; color:var(--text-dim); }
+.gauge-pct{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:var(--text-dim); flex-shrink:0; }
+.gauge-track{ height:6px; border-radius:6px; background:var(--surface-2); border:1px solid var(--stroke); overflow:hidden; }
+.gauge-fill{ height:100%; width:0%; border-radius:6px; background:var(--gradient); transition:width .35s cubic-bezier(.4,0,.2,1), background .35s ease; }
+.gauge-fill.over{ background:linear-gradient(135deg,#FF6B6B,#FFB020); }
+
+/* --- repère de valeurs usuelles sur les curseurs --- */
+.track-wrap{ position:relative; display:block; padding:8px 0; }
+.usual-band{
+  position:absolute; top:50%; transform:translateY(-50%);
+  height:8px; border-radius:3px;
+  background:var(--text-faint); opacity:.28;
+  pointer-events:none; z-index:0;
+}
+.track-wrap input[type=range]{ position:relative; z-index:1; }
+.card.locked .usual-band{ opacity:.15; }
+
+/* ================= PAGER ================= */
+.phone-shell{ display:flex; flex-direction:column; overflow:hidden !important; padding-bottom:0 !important; }
+
+.pager{
+  flex:1; min-height:0;
+  display:flex;
+  overflow-x:auto; overflow-y:hidden;
+  scroll-snap-type:x mandatory;
+  scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch;
+  scrollbar-width:none;
+}
+.pager::-webkit-scrollbar{ display:none; }
+
+.page{
+  flex:0 0 100%; width:100%;
+  scroll-snap-align:start; scroll-snap-stop:always;
+  overflow-y:auto; overflow-x:hidden;
+  padding:6px 0 34px;
+  scrollbar-width:none;
+}
+.page::-webkit-scrollbar{ display:none; }
+
+/* le hero ne défile plus : il est dans la zone fixe au-dessus du pager */
+.hero{ position:relative !important; top:auto !important; }
+
+/* dans la première carte d'une page, les bulles s'ouvrent vers le bas
+   pour ne pas être rognées par le bord haut de la page */
+.page .card:first-of-type .tip .bubble{
+  bottom:auto; top:calc(100% + 8px); transform:translateY(-4px);
+}
+.page .card:first-of-type .tip:hover .bubble,
+.page .card:first-of-type .tip:focus-within .bubble{ transform:translateY(0); }
+
+/* ---- navigation par points ---- */
+.page-nav{
+  position:relative; z-index:78;
+  flex-shrink:0;
+  display:flex; align-items:center; justify-content:space-between;
+  gap:2px; padding:8px 12px calc(10px + env(safe-area-inset-bottom));
+  background:var(--bg);
+  border-top:1px solid var(--stroke);
+}
+html[data-theme="light"] .page-nav{ background:var(--bg); }
+
+.page-dot{
+  flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;
+  background:transparent; border:none; cursor:pointer; padding:4px 2px;
+  font-family:inherit;
+}
+.dot-pip{
+  width:6px; height:6px; border-radius:50%;
+  background:var(--text-faint); opacity:.45;
+  transition:all .25s ease;
+}
+.dot-label{
+  font-size:9.5px; font-weight:600; color:var(--text-faint);
+  white-space:nowrap; transition:color .25s ease; letter-spacing:-0.01em;
+}
+.page-dot.active .dot-pip{ background:var(--accent-b); opacity:1; width:18px; border-radius:3px; }
+.page-dot.active .dot-label{ color:var(--text); }
+
+/* les blocs de bas de page reprennent leur marge dans le nouveau flux */
+.footnote{ margin-bottom:8px; }
+
+/* ============ ZONE FIXE COMPACTABLE ============ */
+.header-row{
+  overflow:hidden;
+  transition:max-height .28s cubic-bezier(.4,0,.2,1), opacity .2s ease,
+             padding-top .28s ease, padding-bottom .28s ease;
+  max-height:110px; opacity:1;
+}
+.phone-shell.compact .header-row{
+  max-height:0; opacity:0; padding-top:0; padding-bottom:0;
+}
+
+.mode-toggle{ transition:margin .28s ease; }
+.phone-shell.compact .mode-toggle{ margin-top:10px; }
+
+/* hero rétréci */
+.hero{ transition:padding .28s cubic-bezier(.4,0,.2,1), margin .28s ease, background .35s ease, box-shadow .35s ease; }
+.hero-value{ transition:font-size .28s cubic-bezier(.4,0,.2,1); }
+.hero-label, .hero-sub{ transition:max-height .28s ease, opacity .2s ease, margin .28s ease; overflow:hidden; max-height:40px; opacity:1; }
+
+.phone-shell.compact .hero{ padding:14px 20px 15px; margin:10px 20px 4px; }
+.phone-shell.compact .hero-value{ font-size:34px; }
+.phone-shell.compact .hero-label{ max-height:0; opacity:0; margin:0; }
+.phone-shell.compact .hero-sub{ margin-top:6px; }
+.phone-shell.compact .hero::before, .phone-shell.compact .hero::after{ opacity:.5; }
+
+/* ---- barre Objectif dans la zone fixe ---- */
+.objectif-bar{
+  margin:10px 20px 2px; padding:11px 16px 12px;
+  background:var(--surface); border:1px solid var(--stroke); border-radius:16px;
+  transition:padding .28s ease, margin .28s ease;
+}
+.objectif-bar .slider-top{ margin-bottom:6px; }
+.objectif-bar .row-label{ font-size:13px; }
+.objectif-bar .track-wrap{ padding:6px 0 2px; }
+.phone-shell.compact .objectif-bar{ padding:7px 16px 8px; margin:8px 20px 2px; }
+
+/* masqué en mode Rendement (le rendement y est le résultat, pas une consigne) */
+.objectif-bar.hidden-bar{
+  max-height:0; opacity:0; padding-top:0; padding-bottom:0;
+  margin-top:0; margin-bottom:0; border-width:0; overflow:hidden;
+  pointer-events:none;
+}
+.objectif-bar{ max-height:120px; overflow:hidden; }
+
+/* ============ PAGE RÉSULTAT DISTINCTE ============ */
+.page-result{
+  background:
+    radial-gradient(120% 45% at 50% 0%, var(--accent-halo) 0%, transparent 70%);
+}
+.page-result::before{
+  content:""; display:block; height:2px; margin:0 20px 4px;
+  border-radius:2px; background:var(--gradient); opacity:.8;
+}
+.page-dot.is-result .dot-pip{ box-shadow:0 0 0 2px var(--accent-halo); }
+.page-dot.is-result.active .dot-pip{ box-shadow:0 0 10px var(--accent-glow); }
+
+/* ---- bloc repliable des limites ---- */
+.limits{ margin:20px 20px 0; }
+.limits summary{
+  cursor:pointer; list-style:none;
+  font-size:12.5px; font-weight:600; color:var(--text-dim);
+  padding:12px 14px; background:var(--surface); border:1px solid var(--stroke);
+  border-radius:14px; display:flex; align-items:center; gap:8px;
+}
+.limits summary::-webkit-details-marker{ display:none; }
+.limits summary::before{ content:"▸"; font-size:10px; transition:transform .2s ease; }
+.limits[open] summary::before{ transform:rotate(90deg); }
+.limits[open] summary{ border-radius:14px 14px 0 0; border-bottom:none; }
+.limits .card{ margin:0; border-radius:0 0 14px 14px; }
+.limits .card .row:first-child{ border-radius:0; }
+
+/* ================= PANNEAU RÉSULTAT COULISSANT ================= */
+.result-sheet{
+  position:absolute; left:0; right:0; bottom:var(--nav-h, 52px);
+  z-index:70;
+  background:var(--surface);
+  border-top:1px solid var(--stroke);
+  border-radius:22px 22px 0 0;
+  box-shadow:0 -18px 45px rgba(0,0,0,0.38);
+  display:flex; flex-direction:column;
+  height:calc(82% - var(--nav-h, 52px));
+  transform:translateY(calc(100% - var(--peek-h, 92px)));
+  transition:transform .34s cubic-bezier(.32,.72,0,1);
+  touch-action:none;
+}
+.result-sheet.open{ transform:translateY(0); }
+.result-sheet.dragging{ transition:none; }
+
+.rs-peek{ flex-shrink:0; padding:8px 20px 12px; cursor:grab; user-select:none; }
+.rs-peek:active{ cursor:grabbing; }
+.rs-grip{ width:38px; height:4px; border-radius:4px; background:var(--stroke); margin:0 auto 10px; }
+.rs-peek-row{ display:flex; align-items:center; gap:18px; }
+.rs-peek-item{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.rs-peek-label{ font-size:10px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.05em; }
+.rs-peek-value{ font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; color:var(--text); white-space:nowrap; }
+.rs-peek-value.accent{ color:var(--mint); }
+.rs-chevron{ margin-left:auto; color:var(--text-faint); font-size:16px; transition:transform .34s ease; }
+.result-sheet.open .rs-chevron{ transform:rotate(180deg); }
+
+.rs-body{ flex:1; min-height:0; overflow-y:auto; padding-bottom:26px; touch-action:pan-y; scrollbar-width:none; }
+.rs-body::-webkit-scrollbar{ display:none; }
+.rs-body .card:first-of-type .tip .bubble{ bottom:auto; top:calc(100% + 8px); transform:translateY(-4px); }
+
+/* le pager laisse la place au panneau replié */
+.pager{ padding-bottom:calc(var(--peek-h, 92px) + 6px); }
+
+/* ================= CASCADE CA -> NET ================= */
+.wf-card{ padding:16px 18px 14px; }
+.wf-bar{ display:flex; width:100%; height:26px; border-radius:8px; overflow:hidden; background:var(--surface-2); }
+.wf-seg{ height:100%; transition:width .35s cubic-bezier(.4,0,.2,1); }
+.wf-legend{ display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:14px; }
+.wf-item{ display:flex; align-items:center; gap:7px; font-size:12px; }
+.wf-chip{ width:9px; height:9px; border-radius:3px; flex-shrink:0; }
+.wf-name{ color:var(--text-dim); font-weight:500; }
+.wf-val{ font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--text); }
+
+
+
+/* ================= COMPARAISON ================= */
+.sheet-head-actions{ display:flex; align-items:center; gap:8px; }
+.cmp-btn{
+  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim);
+  font-family:inherit; font-size:12px; font-weight:700; padding:7px 13px; border-radius:10px; cursor:pointer;
+}
+.cmp-btn:not(:disabled){ background:var(--gradient); color:#fff; border-color:transparent; }
+.cmp-btn:disabled{ opacity:.5; cursor:not-allowed; }
+.cmp-hint{ padding:0 20px 10px; font-size:11.5px; color:var(--text-faint); }
+
+.hist-check{
+  width:20px; height:20px; border-radius:6px; flex-shrink:0;
+  border:1.5px solid var(--stroke); background:var(--surface-2);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; color:transparent; cursor:pointer;
+}
+.hist-check.on{ background:var(--gradient); border-color:transparent; color:#fff; }
+
+.cmp-overlay{
+  position:absolute; inset:0; z-index:120;
+  background:var(--bg);
+  display:flex; flex-direction:column;
+  opacity:0; pointer-events:none; transform:translateY(12px);
+  transition:opacity .22s ease, transform .22s ease;
+}
+.cmp-overlay.open{ opacity:1; pointer-events:auto; transform:translateY(0); }
+.cmp-header{ display:flex; justify-content:space-between; align-items:center; padding:20px 20px 14px; flex-shrink:0; }
+.cmp-scroll{ flex:1; overflow:auto; padding:0 16px 26px; }
+.cmp-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.cmp-table th, .cmp-table td{ padding:10px 8px; text-align:right; border-bottom:1px solid var(--stroke); white-space:nowrap; }
+.cmp-table th:first-child, .cmp-table td:first-child{ text-align:left; color:var(--text-dim); font-weight:500; position:sticky; left:0; background:var(--bg); }
+.cmp-table thead th{ color:var(--text); font-weight:700; font-size:12px; border-bottom:1.5px solid var(--stroke); }
+.cmp-table td{ font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--text); }
+.cmp-table tr.head-row td{ font-weight:700; }
+.cmp-best{ color:var(--mint) !important; }
+.cmp-worst{ color:var(--coral) !important; }
+
+/* ================= GLISSER POUR MODIFIER ================= */
+.field.scrubbable{ cursor:ew-resize; }
+.field.scrubbing{ border-color:var(--accent-b); box-shadow:0 0 0 2px var(--accent-halo); }
+.scrub-hint{ font-size:9.5px; color:var(--text-faint); opacity:.7; }
+/* fige les animations le temps de mesurer la hauteur repliée */
+.phone-shell.measuring, .phone-shell.measuring *{ transition:none !important; animation:none !important; }
+
+/* ================= DIAGNOSTIC ================= */
+.diag-row{ padding:14px 18px 15px; border-bottom:1px solid var(--stroke); }
+.diag-row:last-child{ border-bottom:none; }
+.diag-head{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
+.diag-name{ font-size:13.5px; font-weight:600; color:var(--text); }
+.diag-val{ font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; white-space:nowrap; }
+.diag-val.good{ color:var(--mint); }
+.diag-val.ok{ color:var(--amber); }
+.diag-val.warn{ color:var(--coral); }
+.diag-val.na{ color:var(--text-faint); }
+
+.diag-track{
+  position:relative; height:6px; margin:11px 0 9px;
+  background:var(--surface-2); border:1px solid var(--stroke);
+  border-radius:6px;
+}
+.diag-band{
+  position:absolute; top:0; bottom:0;
+  background:var(--accent-b); opacity:.30; border-radius:4px;
+}
+.diag-mark{
+  position:absolute; top:50%; width:11px; height:11px; border-radius:50%;
+  transform:translate(-50%,-50%);
+  background:var(--text); border:2px solid var(--surface);
+  box-shadow:0 1px 5px rgba(0,0,0,.45);
+  transition:left .35s cubic-bezier(.4,0,.2,1), background .25s ease;
+}
+.diag-mark.good{ background:var(--mint); }
+.diag-mark.ok{ background:var(--amber); }
+.diag-mark.warn{ background:var(--coral); }
+
+.diag-foot{ display:flex; align-items:flex-start; gap:8px; }
+.diag-tag{
+  flex-shrink:0; font-size:10px; font-weight:700; padding:3px 7px; border-radius:6px;
+  text-transform:uppercase; letter-spacing:.03em;
+}
+.diag-tag.good{ background:rgba(0,230,168,.14); color:var(--mint); }
+.diag-tag.ok{ background:rgba(255,176,32,.14); color:var(--amber); }
+.diag-tag.warn{ background:rgba(255,107,107,.14); color:var(--coral); }
+.diag-tag.na{ background:var(--surface-2); color:var(--text-faint); }
+.diag-note{ font-size:11px; line-height:1.45; color:var(--text-faint); }
+
+/* légende de la cascade, resserrée */
+.wf-legend{ gap:7px 14px; }
+.wf-item{ font-size:11.5px; }
+.hero-value{ transition:text-shadow .4s ease; font-variant-numeric:tabular-nums; }
+
+/* ---- rouleaux du chiffre principal ---- */
+#heroValue{ display:inline-flex; align-items:flex-start; }
+.od-cell{
+  display:inline-block; overflow:hidden;
+  height:1em; line-height:1em;
+}
+.od-strip{ display:block; will-change:transform; }
+.od-digit{ display:block; height:1em; line-height:1em; text-align:center; }
+.od-sep{ display:inline-block; height:1em; line-height:1em; white-space:pre; }
+
+/* ---- nom du projet, saisi dans l'en-tête ---- */
+.project-name{
+  display:block; width:100%;
+  background:transparent; border:none; outline:none;
+  padding:2px 0 3px;
+  font-family:inherit; font-size:12px; font-weight:600;
+  color:var(--text-dim);
+  text-transform:uppercase; letter-spacing:0.08em;
+  border-bottom:1px dashed transparent;
+  transition:color .2s ease, border-color .2s ease;
+}
+.project-name::placeholder{ color:var(--text-faint); text-transform:uppercase; }
+.project-name:hover{ border-bottom-color:var(--stroke); }
+.project-name:focus{
+  color:var(--text); border-bottom-color:var(--accent-b);
+  text-transform:none; letter-spacing:0;
+}
+
+/* fondu du changement de thème : n'agit que pendant la bascule,
+   pour ne pas interférer avec les autres animations le reste du temps */
+html.theme-anim, html.theme-anim *{
+  transition-property: background-color, color, border-color, box-shadow;
+  transition-duration: .25s;
+  transition-timing-function: ease;
+}
+
+/* pastilles de statut : fond teinté dérivé de la couleur, plus sourd */
+.diag-tag.good{ background:color-mix(in srgb, var(--mint) 16%, transparent); color:var(--mint); }
+.diag-tag.ok{ background:color-mix(in srgb, var(--amber) 16%, transparent); color:var(--amber); }
+.diag-tag.warn{ background:color-mix(in srgb, var(--coral) 16%, transparent); color:var(--coral); }
 </style>
 </head>
 <body>
 
-<div class="phone-shell">
+<div class="phone-frame">
+<div class="phone-shell" id="scrollRoot">
 
-  <div class="statusbar">
-    <span>9:41</span>
-    <div class="dot-group">
-      <span>●●●</span>
+  <div class="header-row">
+    <div>
+      <input class="project-name" id="projectName" type="text" placeholder="Nom du projet" maxlength="60" spellcheck="false">
+      <div class="title" id="pageTitle">Surface à construire</div>
+    </div>
+    <div class="header-actions">
+      <button class="icon-btn" id="themeBtn" title="Mode clair / sombre">
+        <span class="icon-sun">☀</span><span class="icon-moon">☾</span>
+      </button>
+      <button class="icon-btn" id="menuBtn" title="Historique">⋮</button>
     </div>
   </div>
 
-  <div class="header">
-    <div class="eyebrow">Simulateur · Promotion Genève</div>
-    <div class="title">Surface à construire</div>
+  <div class="mode-toggle">
+    <span class="mode-thumb" id="modeThumb"></span>
+    <button class="active" data-mode="objectif">Surface</button>
+    <button data-mode="terrain">Terrain</button>
+    <button data-mode="surface">Rendement</button>
   </div>
 
   <!-- HERO RESULT -->
-  <div class="hero">
-    <div class="hero-label">Surface nécessaire</div>
-    <div class="hero-value"><span id="heroSurface">—</span><span class="unit">m² SBP</span></div>
+  <div class="hero" id="hero">
+    <div class="hero-label" id="heroLabel">Surface nécessaire</div>
+    <div class="hero-value"><span id="heroValue">—</span><span class="unit" id="heroUnit">m² SBP</span></div>
     <div class="hero-sub">
       <span class="hero-badge" id="heroBadge"><span class="pip"></span><span id="heroBadgeText">calcul en cours</span></span>
     </div>
   </div>
 
+  <div class="alert-box" id="alertBox"><span class="alert-icon">⚠</span><span id="alertText"></span></div>
+
+  <div class="objectif-bar" id="objectifBar">
+    <div class="slider-top">
+      <span class="row-label" id="cibleLabel">Rendement annuel cible
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Rendement annualisé sur fonds propres que tu vises (TRI simplifié). C'est lui qui pilote tout le calcul.</span></span>
+      </span>
+      <span class="slider-val" id="val_cible">12.0%</span>
+    </div>
+    <div class="track-wrap"><span class="usual-band" data-for="sl_cible" data-umin="12" data-umax="20"></span><input type="range" id="sl_cible" min="4" max="30" step="0.5" value="12"></div>
+  </div>
+
+
+  <div class="pager" id="pager">
+    <section class="page" data-page="0">
+
   <!-- INPUTS: MONTANTS -->
-  <div class="section-title">Montants<span class="hint">CHF</span></div>
-  <div class="card">
+  <div class="section-title">
+    <span>Montants</span>
+    <span class="section-title-right"><span class="hint">CHF</span><button class="lock-btn" id="lockMontants" title="Verrouiller les montants">🔓</button></span>
+  </div>
+  <div class="card" id="cardMontants">
     <div class="row">
-      <div class="row-text">
-        <div class="row-label">Terrain</div>
-        <div class="row-note">Prix d'achat</div>
-      </div>
+      <div class="row-text"><div class="row-label">Terrain
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Prix d'achat du terrain, avant les frais d'acquisition (notaire, droits de mutation, RF).</span></span>
+      </div><div class="row-note">Prix d'achat</div></div>
       <div class="field"><input id="in_terrain" type="text" inputmode="numeric" value="1'500'000"><span class="suffix">CHF</span></div>
     </div>
     <div class="row">
-      <div class="row-text">
-        <div class="row-label">Coût de construction</div>
-        <div class="row-note">Par m² SBP</div>
+      <div class="row-text"><div class="row-label">Surface de la parcelle
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Surface totale du terrain, base du calcul de la surface constructible max.</span></span>
+      </div><div class="row-note">Cadastre</div></div>
+      <div class="field"><input id="in_parcelle" type="text" inputmode="numeric" value="900"><span class="suffix">m²</span></div>
+    </div>
+    <div class="slider-row">
+      <div class="slider-top"><span class="row-label">Indice d'utilisation du sol (IUS)
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Ratio SBP totale / surface de parcelle, tous étages confondus — peut dépasser 1 (ex. 1.0 à 2.0+ en zone de développement genevoise). Surface max = parcelle × IUS. Ne pas confondre avec le coefficient d'emprise au sol, qui ne limite que l'empreinte du rez.</span></span>
+      </span><span class="slider-val" id="val_coef">0.80</span></div>
+      <div class="track-wrap"><span class="usual-band" data-for="sl_coef" data-umin="0.6" data-umax="1.2"></span><input type="range" id="sl_coef" min="0.1" max="3" step="0.05" value="0.8"></div>
+    </div>
+    <div class="row">
+      <div class="row-text"><div class="row-label">Surface constructible max
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Parcelle × indice d'utilisation du sol (IUS). Au-delà, le projet n'est pas réalisable sur ce terrain.</span></span>
+      </div><div class="row-note">Calculé automatiquement</div></div>
+      <span class="locked-pill" id="maxBuildablePill">— m²</span>
+    </div>
+    <div class="row gauge-row" id="gaugeRow">
+      <div class="gauge-wrap">
+        <div class="gauge-head">
+          <span class="gauge-label" id="gaugeLabel">—</span>
+          <span class="gauge-pct" id="gaugePct">—</span>
+        </div>
+        <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div></div>
       </div>
+    </div>
+    <div class="row">
+      <div class="row-text"><div class="row-label">Coût de construction
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Coût par m² de surface brute de plancher (SBP), hors terrain et hors TVA.</span></span>
+      </div><div class="row-note">Par m² SBP</div></div>
       <div class="field"><input id="in_cc" type="text" inputmode="numeric" value="4'000"><span class="suffix">/m²</span></div>
     </div>
     <div class="row">
-      <div class="row-text">
-        <div class="row-label">Prix de vente</div>
-        <div class="row-note">Par m² SBP</div>
-      </div>
+      <div class="row-text"><div class="row-label">Prix de vente
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Prix de vente par m² SBP, moyenne tous lots confondus.</span></span>
+      </div><div class="row-note">Par m² SBP</div></div>
       <div class="field"><input id="in_pv" type="text" inputmode="numeric" value="16'000"><span class="suffix">/m²</span></div>
     </div>
     <div class="row">
-      <div class="row-text">
-        <div class="row-label">Durée du projet</div>
-        <div class="row-note">Jusqu'à la vente</div>
+      <div class="row-text"><div class="row-label">Durée du projet
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Durée totale entre l'achat du terrain et la vente du dernier lot. Pas de 0.5 an (un semestre) — ex. 2.5 pour 30 mois.</span></span>
+      </div><div class="row-note">Par semestre (0.5)</div></div>
+      <div class="field"><input id="in_duree" type="text" inputmode="decimal" value="3.0"><span class="suffix">ans</span></div>
+    </div>
+    <div class="row">
+      <div class="row-text"><div class="row-label">Surface moyenne / logement
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Sert à estimer le nombre de logements, utile pour raisonner la prévente en nombre de lots.</span></span>
+      </div><div class="row-note">Pour estimer le nb de lots</div></div>
+      <div class="field"><input id="in_logsize" type="text" inputmode="numeric" value="100"><span class="suffix">m²</span></div>
+    </div>
+    <div class="row hidden" id="row_surface">
+      <div class="row-text"><div class="row-label">Surface à construire
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Surface que tu prévois de construire. Le bouton « max » reprend la surface constructible maximale (parcelle × IUS).</span></span>
+      </div><div class="row-note">SBP du projet</div></div>
+      <div class="surface-control">
+        <button class="max-btn" id="btnUseMax" title="Utiliser la surface constructible max">max</button>
+        <div class="field"><input id="in_surface" type="text" inputmode="numeric" value="300"><span class="suffix">m²</span></div>
       </div>
-      <div class="field"><input id="in_duree" type="text" inputmode="numeric" value="3"><span class="suffix">ans</span></div>
     </div>
   </div>
 
-  <!-- INPUTS: TAUX -->
-  <div class="section-title">Taux &amp; financement<span class="hint">glisser pour ajuster</span></div>
-  <div class="card">
+    </section>
+    <section class="page" data-page="1">
+  <!-- INPUTS: COÛTS & FISCALITÉ -->
+  <div class="section-title">
+    <span>Coûts &amp; fiscalité</span>
+    <span class="section-title-right"><span class="hint">glisser</span><button class="lock-btn" id="lockCouts" title="Verrouiller les coûts">🔓</button></span>
+  </div>
+  <div class="card" id="cardCouts">
     <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Rendement annuel cible</span><span class="slider-val" id="val_cible">12.0%</span></div>
-      <input type="range" id="sl_cible" min="4" max="30" step="0.5" value="12">
+      <div class="slider-top"><span class="row-label">Frais d'acquisition terrain
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Droits de mutation, notaire, registre foncier — environ 4% au total à Genève.</span></span>
+      </span><span class="slider-val" id="val_fraisacq">4.0%</span></div>
+      <div class="track-wrap"><span class="usual-band" data-for="sl_fraisacq" data-umin="3.5" data-umax="4.5"></span><input type="range" id="sl_fraisacq" min="0" max="8" step="0.1" value="4"></div>
     </div>
     <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Frais d'acquisition terrain</span><span class="slider-val" id="val_fraisacq">4.0%</span></div>
-      <input type="range" id="sl_fraisacq" min="0" max="8" step="0.1" value="4">
+      <div class="slider-top"><span class="row-label">Imprévus de chantier
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Coussin de sécurité ajouté au coût de construction. Un dépassement de 5 à 8% est courant sur une opération.</span></span>
+      </span><span class="slider-val" id="val_imprev">5.0%</span></div>
+      <div class="track-wrap"><span class="usual-band" data-for="sl_imprev" data-umin="5" data-umax="8"></span><input type="range" id="sl_imprev" min="0" max="10" step="0.5" value="5"></div>
     </div>
     <div class="slider-row">
-      <div class="slider-top"><span class="row-label">TVA construction</span><span class="slider-val" id="val_tva">8.1%</span></div>
-      <input type="range" id="sl_tva" min="0" max="12" step="0.1" value="8.1">
+      <div class="slider-top"><span class="row-label">Frais de commercialisation
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Courtage et frais de vente, en % du chiffre d'affaires. Typiquement 3 à 5% à Genève.</span></span>
+      </span><span class="slider-val" id="val_comm">4.0%</span></div>
+      <div class="track-wrap"><span class="usual-band" data-for="sl_comm" data-umin="3" data-umax="5"></span><input type="range" id="sl_comm" min="0" max="10" step="0.5" value="4"></div>
     </div>
     <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Impôt sur le bénéfice (IS)</span><span class="slider-val" id="val_is">14.7%</span></div>
-      <input type="range" id="sl_is" min="0" max="30" step="0.1" value="14.7">
+      <div class="slider-top"><span class="row-label">TVA construction
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Taux légal suisse — 8.1% depuis le 01.01.2024.</span></span>
+      </span><span class="slider-val" id="val_tva">8.1%</span></div>
+      <div class="track-wrap"><span class="usual-band" data-for="sl_tva" data-umin="8.1" data-umax="8.1"></span><input type="range" id="sl_tva" min="0" max="12" step="0.1" value="8.1"></div>
     </div>
     <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Crédit bancaire construction</span><span class="slider-val" id="val_credit">80%</span></div>
-      <input type="range" id="sl_credit" min="0" max="100" step="5" value="80">
-    </div>
-    <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Taux d'intérêt du crédit</span><span class="slider-val" id="val_taux">3.0%</span></div>
-      <input type="range" id="sl_taux" min="0" max="8" step="0.1" value="3">
-    </div>
-    <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Utilisation moyenne du crédit</span><span class="slider-val" id="val_util">50%</span></div>
-      <input type="range" id="sl_util" min="0" max="100" step="5" value="50">
+      <div class="slider-top"><span class="row-label">Impôt sur le bénéfice (IS)
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Taux effectif d'impôt sur le bénéfice de la société — environ 14.7% à Genève en 2024.</span></span>
+      </span><span class="slider-val" id="val_is">14.7%</span></div>
+      <div class="track-wrap"><span class="usual-band" data-for="sl_is" data-umin="14" data-umax="15"></span><input type="range" id="sl_is" min="0" max="30" step="0.1" value="14.7"></div>
     </div>
   </div>
 
-  <!-- SAVE -->
-  <div class="section-title">Sauvegarder ce calcul<span class="hint">stocké dans le navigateur</span></div>
-  <div class="save-block">
-    <input class="save-input" id="saveName" type="text" placeholder="Nom du calcul (ex. Chêne-Bourg lot A)">
-    <button class="primary-btn" id="saveBtn">Enregistrer</button>
+    </section>
+    <section class="page" data-page="2">
+  <!-- INPUTS: FINANCEMENT BANCAIRE -->
+  <div class="section-title">
+    <span>Financement bancaire</span>
+    <span class="section-title-right"><span class="hint">glisser</span><button class="lock-btn" id="lockFin" title="Verrouiller le financement">🔓</button></span>
+  </div>
+  <div class="card" id="cardFin">
+    <div class="slider-row">
+      <div class="slider-top"><span class="row-label">Crédit bancaire construction
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Part du coût de construction financée par la banque. Le solde, plus tout le terrain, reste en fonds propres.</span></span>
+      </span><span class="slider-val" id="val_credit">80%</span></div>
+      <div class="track-wrap"><span class="usual-band" data-for="sl_credit" data-umin="70" data-umax="80"></span><input type="range" id="sl_credit" min="0" max="100" step="5" value="80"></div>
+    </div>
+    <div class="slider-row">
+      <div class="slider-top"><span class="row-label">Taux d'intérêt du crédit
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Taux d'intérêt annuel appliqué au crédit de construction pendant le chantier.</span></span>
+      </span><span class="slider-val" id="val_taux">3.0%</span></div>
+      <div class="track-wrap"><span class="usual-band" data-for="sl_taux" data-umin="2.5" data-umax="3.5"></span><input type="range" id="sl_taux" min="0" max="8" step="0.1" value="3"></div>
+    </div>
+    <div class="slider-row">
+      <div class="slider-top"><span class="row-label">Utilisation moyenne du crédit
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Solde moyen réellement emprunté pendant le chantier, en % du plafond (le crédit est tiré progressivement, pas d'un coup).</span></span>
+      </span><span class="slider-val" id="val_util">50%</span></div>
+      <div class="track-wrap"><span class="usual-band" data-for="sl_util" data-umin="45" data-umax="55"></span><input type="range" id="sl_util" min="0" max="100" step="5" value="50"></div>
+    </div>
   </div>
 
-  <!-- SAVED LIST -->
-  <div class="section-title">Calculs enregistrés<span class="hint" id="savedCount">0</span></div>
-  <div class="card">
-    <div class="saved-empty" id="savedEmpty">Aucun calcul enregistré pour l'instant.</div>
-    <div id="savedList"></div>
+    </section>
   </div>
 
-  <!-- DETAIL TOGGLE -->
-  <div class="chip-toggle">
-    <button class="active" data-tab="verif">Vérification</button>
-    <button data-tab="notes">Hypothèses</button>
-  </div>
+  <nav class="page-nav" id="pageNav">
+      <button class="page-dot active" data-goto="0"><span class="dot-pip"></span><span class="dot-label">Montants</span></button>
+      <button class="page-dot" data-goto="1"><span class="dot-pip"></span><span class="dot-label">Coûts</span></button>
+      <button class="page-dot" data-goto="2"><span class="dot-pip"></span><span class="dot-label">Banque</span></button>
+  </nav>
 
-  <div id="tab_verif" class="tabpane active">
-    <div class="section-title">Sur la base de la surface retenue<span class="hint" id="verifSurf">— m²</span></div>
+
+  <!-- PANNEAU RÉSULTAT COULISSANT -->
+  <div class="result-sheet" id="resultSheet">
+    <div class="rs-peek" id="rsPeek">
+      <div class="rs-grip"></div>
+      <div class="rs-peek-row">
+        <div class="rs-peek-item">
+          <span class="rs-peek-label">Résultat net</span>
+          <span class="rs-peek-value" id="peek_rn">—</span>
+        </div>
+        <div class="rs-peek-item">
+          <span class="rs-peek-label">TRI</span>
+          <span class="rs-peek-value accent" id="peek_rann">—</span>
+        </div>
+        <span class="rs-chevron" id="rsChevron">⌃</span>
+      </div>
+    </div>
+    <div class="rs-body" id="rsBody">
+
+      <!-- CASCADE -->
+      <div class="section-title"><span>Du chiffre d'affaires au résultat net</span></div>
+      <div class="card wf-card">
+        <div class="wf-bar" id="wfBar"></div>
+        <div class="wf-legend" id="wfLegend"></div>
+      </div>
+
+      <div class="section-title">
+        <span>Diagnostic</span>
+        <span class="section-title-right"><span class="hint">vs repères genevois</span></span>
+      </div>
+      <div class="card" id="diagCard"></div>
+
+  
+
+    <!-- 1. LES CHIFFRES DE LA DÉCISION -->
+    <div class="section-title">
+      <span>Résultat</span>
+      <span class="section-title-right"><span class="hint" id="verifSurf">— m²</span></span>
+    </div>
+    <div class="card result-card">
+      <div class="result-main">
+        <div class="result-block">
+          <div class="result-label">Résultat net</div>
+          <div class="result-value" id="v_rn">—</div>
+        </div>
+        <div class="result-block">
+          <div class="result-label">Rendement (TRI)</div>
+          <div class="result-value accent" id="v_rann">—</div>
+        </div>
+      </div>
+      <div class="breakdown-row"><span class="k">Marge nette (% du CA)
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Résultat net ÷ chiffre d'affaires. Repère courant : en dessous de ~8%, la marge absorbe mal les aléas.</span></span>
+      </span><span class="v" id="v_marge">—</span></div>
+      <div class="breakdown-row"><span class="k">Nombre de logements (est.)
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Surface ÷ surface moyenne par logement. Utile pour convertir un taux de prévente en nombre de lots.</span></span>
+      </span><span class="v" id="v_nblog">—</span></div>
+    </div>
+
+    <!-- 2. COÛTS -->
+    <div class="section-title"><span>Coûts</span></div>
     <div class="card">
-      <div class="breakdown-row"><span class="k">Coût construction (incl. TVA)</span><span class="v" id="v_ccons">—</span></div>
-      <div class="breakdown-row"><span class="k">Coût terrain (frais compris)</span><span class="v" id="v_cterr">—</span></div>
-      <div class="breakdown-row total"><span class="k">Coût total du projet</span><span class="v" id="v_ctot">—</span></div>
-      <div class="breakdown-row"><span class="k">Financement bancaire</span><span class="v" id="v_fin">—</span></div>
-      <div class="breakdown-row"><span class="k">Apport en fonds propres</span><span class="v" id="v_apport">—</span></div>
-      <div class="breakdown-row"><span class="k">Intérêts intercalaires</span><span class="v neg" id="v_int">—</span></div>
-      <div class="breakdown-row"><span class="k">Chiffre d'affaires</span><span class="v" id="v_ca">—</span></div>
-      <div class="breakdown-row"><span class="k">Impôt sur les sociétés</span><span class="v neg" id="v_impot">—</span></div>
-      <div class="breakdown-row total"><span class="k">Résultat net</span><span class="v pos" id="v_rn">—</span></div>
-      <div class="breakdown-row total"><span class="k">Rendement annualisé obtenu</span><span class="v pos" id="v_rann">—</span></div>
+      <div class="breakdown-row"><span class="k">Construction (incl. TVA, imprévus)
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Surface × coût/m² × (1 + TVA) × (1 + imprévus).</span></span>
+      </span><span class="v" id="v_ccons">—</span></div>
+      <div class="breakdown-row"><span class="k">Taxe d'équipement
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">47 CHF/m² SBP à Genève, plafonnée à 2.5% du coût de construction.</span></span>
+      </span><span class="v" id="v_taxe">—</span></div>
+      <div class="breakdown-row"><span class="k">Terrain (frais compris)
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Terrain × (1 + frais d'acquisition).</span></span>
+      </span><span class="v" id="v_cterr">—</span></div>
+      <div class="breakdown-row subtotal"><span class="k">Coût total du projet</span><span class="v" id="v_ctot">—</span></div>
+      <div class="breakdown-row"><span class="k">Poids du terrain
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Coût du terrain ÷ coût total. Au-delà d'environ 25-30%, signal classique que le terrain est cher pour l'opération.</span></span>
+      </span><span class="v" id="v_poids">—</span></div>
     </div>
-  </div>
 
-  <div id="tab_notes" class="tabpane">
-    <div class="section-title">Ce que ce modèle simplifie</div>
+    <!-- 3. FINANCEMENT -->
+    <div class="section-title"><span>Financement</span></div>
     <div class="card">
-      <div class="row"><div class="row-text"><div class="row-note">Pas de plan de trésorerie semestriel — flux annuels agrégés, pas de TRI sur cash-flows réels.</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">Intérêts = crédit mobilisé × taux × durée × utilisation moyenne (tirage progressif approximé, pas de courbe de décaissement réelle).</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">TVA ajoutée au coût de construction, non récupérée.</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">Impôt personnel du promoteur (IBGI si personne physique) non calculé — seulement l'IS société.</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">Terrain payé 100% fonds propres, seule la construction est financée par la banque.</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">Aucun aléa de chantier, retard, ou taux de prévente modélisé.</div></div></div>
+      <div class="breakdown-row"><span class="k">Crédit bancaire
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Part du coût de construction couverte par le crédit bancaire.</span></span>
+      </span><span class="v" id="v_fin">—</span></div>
+      <div class="breakdown-row subtotal"><span class="k">Apport en fonds propres
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Coût total moins le crédit bancaire — ce que tu sors de ta poche.</span></span>
+      </span><span class="v" id="v_apport">—</span></div>
+      <div class="breakdown-row"><span class="k">Intérêts intercalaires
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Crédit × taux × durée × utilisation moyenne.</span></span>
+      </span><span class="v neg" id="v_int">—</span></div>
     </div>
+
+    <!-- 4. RECETTES & FISCALITÉ -->
+    <div class="section-title"><span>Recettes &amp; fiscalité</span></div>
+    <div class="card">
+      <div class="breakdown-row"><span class="k">Chiffre d'affaires
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Surface × prix de vente au m².</span></span>
+      </span><span class="v" id="v_ca">—</span></div>
+      <div class="breakdown-row"><span class="k">Frais de commercialisation
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Chiffre d'affaires × taux de commercialisation (courtage, frais de vente).</span></span>
+      </span><span class="v neg" id="v_comm">—</span></div>
+      <div class="breakdown-row"><span class="k">Impôt sur les sociétés
+        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Résultat avant impôt × taux d'IS (si le résultat est positif).</span></span>
+      </span><span class="v neg" id="v_impot">—</span></div>
+    </div>
+  <div class="final-save-bar">
+    <button class="final-save-btn" id="finalSaveBtn">📂 Classer le projet</button>
   </div>
 
   <div class="reset-bar">
     <button class="reset-btn" id="resetBtn">Réinitialiser les valeurs par défaut</button>
   </div>
 
+  <div class="save-note" id="saveNote"><span class="dot"></span><span>Enregistré automatiquement sur cet appareil</span></div>
+
+
+    <details class="limits">
+      <summary>Ce que ce modèle simplifie</summary>
+    <div class="card">
+      <div class="row"><div class="row-text"><div class="row-note">Rendement calculé en TRI sur flux de fonds propres semestriels : terrain et taxe au départ, fonds propres de construction étalés, vente en fin d'opération. Contrôle : la somme des flux égale le résultat net.</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">Intérêts = crédit mobilisé × taux × durée × utilisation moyenne (tirage progressif approximé, pas de courbe de décaissement réelle).</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">TVA ajoutée au coût de construction, non récupérée.</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">Taxe d'équipement genevoise : 47 CHF/m² SBP, plafonnée à 2.5% du coût de construction (plafond appliqué automatiquement).</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">Imprévus appliqués au coût de construction ; frais de commercialisation déduits du chiffre d'affaires.</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">Impôt personnel du promoteur (IBGI si personne physique) non calculé — seulement l'IS société.</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">Terrain payé 100% fonds propres, seule la construction est financée par la banque.</div></div></div>
+      <div class="row"><div class="row-text"><div class="row-note">Aucun aléa de chantier, retard, ou taux de prévente modélisé.</div></div></div>
+    </div>
+    </details>
+
   <div class="footnote">
-    <b>Formule :</b> surface résolue algébriquement pour que le résultat net (après IS et intérêts) rapporte exactement le rendement annuel cible sur les fonds propres investis, composé sur la durée du projet.
+    <b>Formule :</b> en mode "Cible ➜ Surface", la surface est résolue algébriquement pour que le résultat net (après IS et intérêts) rapporte exactement le rendement cible sur les fonds propres, composé sur la durée. En mode "Surface ➜ Rendement", c'est l'inverse : la surface est fixée et le rendement annualisé en découle.
   </div>
 
+    </div>
+  </div>
+
+</div><!-- /phone-shell (scrollRoot) -->
+
+<!-- NAME PROJECT MODAL -->
+<div class="modal-backdrop" id="nameModalBackdrop">
+  <div class="modal-box">
+    <div class="modal-title">Nommer ce projet</div>
+    <input type="text" class="modal-input" id="nameModalInput" placeholder="Nom du projet">
+    <div class="modal-actions">
+      <button class="modal-btn ghost" id="nameModalCancel">Annuler</button>
+      <button class="modal-btn primary" id="nameModalSave">Enregistrer</button>
+    </div>
+  </div>
 </div>
 
-<div class="toast" id="toast"></div>
+<!-- HISTORY SHEET -->
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+<div class="sheet" id="sheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-header">
+    <span class="sheet-title">Projets classés</span>
+    <div class="sheet-head-actions">
+      <button class="cmp-btn" id="cmpBtn" disabled>Comparer</button>
+      <button class="sheet-close" id="sheetClose">✕</button>
+    </div>
+  </div>
+  <div class="cmp-hint" id="cmpHint">Coche 2 ou 3 projets pour les comparer.</div>
+  <div class="sheet-list" id="sheetList"></div>
+</div>
+
+
+  <!-- COMPARAISON -->
+  <div class="cmp-overlay" id="cmpOverlay">
+    <div class="cmp-header">
+      <span class="sheet-title">Comparaison</span>
+      <button class="sheet-close" id="cmpClose">✕</button>
+    </div>
+    <div class="cmp-scroll" id="cmpTable"></div>
+  </div>
+</div><!-- /phone-frame -->
 
 <script>
 const $ = id => document.getElementById(id);
+const STORAGE_KEY = 'promoteur_sim_state_v3';
+const HISTORY_KEY = 'promoteur_sim_history_v1';
+const THEME_KEY = 'promoteur_sim_theme';
+let memoryFallback = null;
+let historyMemory = null;
 
-function parseNum(str){
-  return parseFloat(String(str).replace(/[^0-9.\-]/g,'')) || 0;
-}
-function fmtInt(n){
-  return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
-}
-function fmtCHF(n){
-  if(!isFinite(n)) return '—';
-  return fmtInt(n) + " CHF";
-}
-function fmtPct(n){
-  if(!isFinite(n)) return '—';
-  return (n*100).toFixed(1) + "%";
-}
+function parseNum(str){ return parseFloat(String(str).replace(/[^0-9.\-]/g,'')) || 0; }
+function fmtInt(n){ return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'"); }
+function fmtCHF(n){ if(!isFinite(n)) return '—'; return fmtInt(n) + " CHF"; }
+function fmtPct(n){ if(!isFinite(n)) return '—'; return (n*100).toFixed(1) + "%"; }
 
-const numInputs = ['in_terrain','in_cc','in_pv','in_duree'];
-const sliders = {
-  cible:'sl_cible', fraisacq:'sl_fraisacq', tva:'sl_tva', is:'sl_is',
-  credit:'sl_credit', taux:'sl_taux', util:'sl_util'
-};
+const numInputs = ['in_terrain','in_parcelle','in_cc','in_pv','in_duree','in_surface','in_logsize'];
+const sliders = { cible:'sl_cible', fraisacq:'sl_fraisacq', imprev:'sl_imprev', comm:'sl_comm', tva:'sl_tva', is:'sl_is', credit:'sl_credit', taux:'sl_taux', util:'sl_util', coef:'sl_coef' };
+
+let montantsLocked = false;
+let coutsLocked = false;
+let finLocked = false;
+
+const MONTANTS_IDS = ['in_terrain','in_parcelle','in_cc','in_pv','in_duree','in_surface','in_logsize','sl_coef'];
+const COUTS_IDS = ['sl_fraisacq','sl_imprev','sl_comm','sl_tva','sl_is'];
+const FIN_IDS = ['sl_credit','sl_taux','sl_util'];
+
+function applyLockUI(){
+  $('lockMontants').textContent = montantsLocked ? '🔒' : '🔓';
+  $('cardMontants').classList.toggle('locked', montantsLocked);
+  MONTANTS_IDS.forEach(id=> $(id).disabled = montantsLocked);
+  // en mode 'terrain' le prix du terrain reste un résultat, jamais une saisie
+  if(mode === 'terrain') $('in_terrain').disabled = true;
+
+  $('lockCouts').textContent = coutsLocked ? '🔒' : '🔓';
+  $('cardCouts').classList.toggle('locked', coutsLocked);
+  COUTS_IDS.forEach(id=> $(id).disabled = coutsLocked);
+
+  $('lockFin').textContent = finLocked ? '🔒' : '🔓';
+  $('cardFin').classList.toggle('locked', finLocked);
+  FIN_IDS.forEach(id=> $(id).disabled = finLocked);
+}
+$('lockMontants').addEventListener('click', ()=>{
+  montantsLocked = !montantsLocked;
+  applyLockUI();
+  saveState();
+});
+$('lockCouts').addEventListener('click', ()=>{
+  coutsLocked = !coutsLocked;
+  applyLockUI();
+  saveState();
+});
+$('lockFin').addEventListener('click', ()=>{
+  finLocked = !finLocked;
+  applyLockUI();
+  saveState();
+});
+
+let mode = 'objectif'; // 'objectif' | 'surface'
 
 function formatNumericField(el){
-  let raw = parseNum(el.value);
-  el.value = fmtInt(raw);
+  if(el.id === 'in_duree'){
+    let v = Math.max(0.5, Math.round(parseNum(el.value)*2)/2); // pas de 0.5 an
+    el.value = v.toFixed(1);
+  } else {
+    el.value = fmtInt(parseNum(el.value));
+  }
 }
 
 numInputs.forEach(id=>{
@@ -507,272 +1133,1098 @@ numInputs.forEach(id=>{
 
 Object.entries(sliders).forEach(([key, id])=>{
   $(id).addEventListener('input', ()=>{
-    $('val_'+key).textContent = parseFloat($(id).value).toFixed(1) + '%';
+    $('val_'+key).textContent = key === 'coef'
+      ? parseFloat($(id).value).toFixed(2)
+      : parseFloat($(id).value).toFixed(1) + '%';
     compute();
   });
 });
 
-// tabs
-document.querySelectorAll('.chip-toggle button').forEach(btn=>{
+function applyModeUI(){
+  // couleur d'accent + glissement de l'indicateur
+  const order = ['objectif','terrain','surface'];
+  const idx = Math.max(0, order.indexOf(mode));
+  document.documentElement.setAttribute('data-mode', mode);
+  $('modeThumb').style.transform = `translateX(${idx*100}%)`;
+  document.querySelectorAll('.mode-toggle button').forEach(b=>
+    b.classList.toggle('active', b.dataset.mode === mode));
+
+  // en mode Rendement, le rendement est le résultat : pas de cible à saisir
+  $('objectifBar').classList.toggle('hidden-bar', mode === 'surface');
+
+  // la surface se saisit dans les modes 'surface' et 'terrain'
+  $('row_surface').classList.toggle('hidden', mode === 'objectif');
+  // en mode terrain, le prix du terrain est le résultat, pas une saisie
+  $('in_terrain').disabled = (mode === 'terrain') || montantsLocked;
+  $('in_terrain').style.opacity = mode === 'terrain' ? '0.45' : '';
+
+  $('pageTitle').textContent =
+    mode === 'objectif' ? 'Surface à construire' :
+    mode === 'surface'  ? 'Rendement obtenu'     : 'Prix max du terrain';
+
+  $('cibleLabel').firstChild.textContent = 'Rendement annuel cible ';
+
+  // la zone fixe change de hauteur selon le mode : on remesure le gain du repli
+  if(typeof measureCompactGain === 'function') requestAnimationFrame(measureCompactGain);
+}
+
+$('projectName').addEventListener('input', saveState);
+
+$('btnUseMax').addEventListener('click', ()=>{
+  const coef = parseFloat($('sl_coef').value);
+  const parcelle = parseNum($('in_parcelle').value);
+  if(parcelle > 0){
+    $('in_surface').value = fmtInt(Math.floor(parcelle*coef));
+    compute();
+  }
+});
+
+// mode toggle
+document.querySelectorAll('.mode-toggle button').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.chip-toggle button').forEach(b=>b.classList.remove('active'));
-    document.querySelectorAll('.tabpane').forEach(p=>p.classList.remove('active'));
-    btn.classList.add('active');
-    $('tab_'+btn.dataset.tab).classList.add('active');
+    mode = btn.dataset.mode;
+    heroInstant = true;          // changement de mode : bascule sèche, sans rouleau
+    applyModeUI();
+    compute();
+    heroInstant = false;
   });
 });
 
-const DEFAULTS = {
-  in_terrain:"1'500'000", in_cc:"4'000", in_pv:"16'000", in_duree:"3",
-  sl_cible:12, sl_fraisacq:4, sl_tva:8.1, sl_is:14.7, sl_credit:80, sl_taux:3, sl_util:50
+// verif/notes tabs
+/* ---------- theme ---------- */
+let themeAnimTimer = null;
+function setTheme(t, animate){
+  if(animate){
+    document.documentElement.classList.add('theme-anim');
+    if(themeAnimTimer) clearTimeout(themeAnimTimer);
+    themeAnimTimer = setTimeout(()=>document.documentElement.classList.remove('theme-anim'), 320);
+  }
+  document.documentElement.setAttribute('data-theme', t);
+  try{ localStorage.setItem(THEME_KEY, t); }catch(e){}
+}
+$('themeBtn').addEventListener('click', ()=>{
+  const current = document.documentElement.getAttribute('data-theme') || 'dark';
+  setTheme(current === 'dark' ? 'light' : 'dark', true);
+});
+
+/* ---------- history sheet ---------- */
+function openSheet(){ $('sheetBackdrop').classList.add('open'); $('sheet').classList.add('open'); renderHistory(); }
+function closeSheet(){ $('sheetBackdrop').classList.remove('open'); $('sheet').classList.remove('open'); }
+$('menuBtn').addEventListener('click', openSheet);
+$('sheetBackdrop').addEventListener('click', closeSheet);
+$('sheetClose').addEventListener('click', closeSheet);
+
+function loadHistory(){
+  try{
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return historyMemory ? JSON.parse(historyMemory) : [];
+}
+function saveHistoryList(list){
+  const json = JSON.stringify(list);
+  try{ localStorage.setItem(HISTORY_KEY, json); }
+  catch(e){ historyMemory = json; }
+}
+
+let cmpSelection = [];
+
+function renderHistory(){
+  const list = loadHistory();
+  const el = $('sheetList');
+  el.innerHTML = '';
+  cmpSelection = cmpSelection.filter(id => list.some(h=>h.id===id));
+  updateCmpBtn();
+  if(list.length === 0){
+    el.innerHTML = '<div class="hist-empty">Aucun projet classé pour l\'instant.<br>Utilise « Classer le projet » pour le retrouver ici.</div>';
+    return;
+  }
+  list.forEach(entry=>{
+    const item = document.createElement('div');
+    item.className = 'hist-item';
+    const on = cmpSelection.includes(entry.id);
+    item.innerHTML = `
+      <button class="hist-check${on?' on':''}" title="Sélectionner pour comparer">✓</button>
+      <div class="hist-main">
+        <div class="hist-label"></div>
+        <div class="hist-date"></div>
+      </div>
+      <button class="hist-del" title="Supprimer">🗑</button>
+    `;
+    item.querySelector('.hist-label').textContent = entry.label;
+    item.querySelector('.hist-date').textContent = entry.ts;
+
+    item.querySelector('.hist-check').addEventListener('click', e=>{
+      e.stopPropagation();
+      const i = cmpSelection.indexOf(entry.id);
+      if(i >= 0) cmpSelection.splice(i,1);
+      else if(cmpSelection.length < 3) cmpSelection.push(entry.id);
+      renderHistory();
+    });
+    item.querySelector('.hist-main').addEventListener('click', ()=>{
+      applyState(entry.state); compute(); closeSheet();
+    });
+    item.querySelector('.hist-del').addEventListener('click', e=>{
+      e.stopPropagation();
+      saveHistoryList(loadHistory().filter(h=>h.id !== entry.id));
+      renderHistory();
+    });
+    el.appendChild(item);
+  });
+}
+
+function updateCmpBtn(){
+  const n = cmpSelection.length;
+  $('cmpBtn').disabled = (n < 2);
+  $('cmpBtn').textContent = n >= 2 ? `Comparer (${n})` : 'Comparer';
+  $('cmpHint').textContent = n === 0
+    ? 'Coche 2 ou 3 projets pour les comparer.'
+    : (n === 1 ? 'Coche au moins un autre projet.' : `${n} projets sélectionnés.`);
+}
+
+/* --- recalcule un projet enregistré sans toucher à l'écran --- */
+function metricsFromState(st){
+  const num = k => parseFloat(String(st[k] ?? '0').replace(/[^0-9.\-]/g,'')) || 0;
+  const sl  = k => parseFloat(st[k]);
+  const raw = {
+    terrain:num('in_terrain'), cc:num('in_cc'), pv:num('in_pv'),
+    duree:Math.max(num('in_duree'),0.5),
+    tva:sl('sl_tva')/100, fraisAcq:sl('sl_fraisacq')/100, is:sl('sl_is')/100,
+    credit:sl('sl_credit')/100, taux:sl('sl_taux')/100, util:sl('sl_util')/100,
+    imprev:sl('sl_imprev')/100, commRate:sl('sl_comm')/100
+  };
+  const cible = sl('sl_cible')/100;
+  const coef = sl('sl_coef');
+  const parcelle = num('in_parcelle');
+  const mode = st.mode || 'objectif';
+  let p = mkParams(raw), S = null;
+
+  if(mode === 'objectif'){
+    const ex = solveSurface(cible, p);
+    if(isFinite(ex)) S = Math.ceil(ex);
+  } else {
+    S = num('in_surface');
+    if(mode === 'terrain'){
+      const T = solveTerrain(cible, S, raw);
+      if(isFinite(T) && T > 0) p = mkParams(Object.assign({}, raw, {terrain:T}));
+    }
+  }
+  if(!S || S <= 0) return null;
+  const m = metrics(S, p);
+  return {
+    mode, S, m, cible,
+    surfaceMax: parcelle*coef,
+    marge: m.ca > 0 ? m.rn/m.ca : NaN,
+    poids: m.ctot > 0 ? m.cterr/m.ctot : NaN,
+    duree: raw.duree
+  };
+}
+
+const CMP_ROWS = [
+  ['Surface',            r => fmtInt(r.S)+' m²',        null],
+  ['Durée',              r => r.duree.toFixed(1)+' ans', null],
+  ['Terrain',            r => fmtCHF(r.m.cterr),        'low'],
+  ['Coût total',         r => fmtCHF(r.m.ctot),         'low'],
+  ['Apport',             r => fmtCHF(r.m.apport),       'low'],
+  ['Chiffre d\'affaires', r => fmtCHF(r.m.ca),           'high'],
+  ['Résultat net',       r => fmtCHF(r.m.rn),           'high'],
+  ['Rendement (TRI)',    r => fmtPct(r.m.rann)+'/an',   'high'],
+  ['Marge (% CA)',       r => fmtPct(r.marge),          'high'],
+  ['Poids terrain',      r => fmtPct(r.poids),          'low'],
+];
+const CMP_RAW = {
+  'Terrain': r=>r.m.cterr, 'Coût total': r=>r.m.ctot, 'Apport': r=>r.m.apport,
+  'Chiffre d\'affaires': r=>r.m.ca, 'Résultat net': r=>r.m.rn,
+  'Rendement (TRI)': r=>r.m.rann, 'Marge (% CA)': r=>r.marge, 'Poids terrain': r=>r.poids
 };
 
-$('resetBtn').addEventListener('click', ()=>{
-  numInputs.forEach(id=> $(id).value = DEFAULTS[id]);
+function openCompare(){
+  const list = loadHistory().filter(h=>cmpSelection.includes(h.id));
+  const cols = list.map(h=>({ label:h.label, res:metricsFromState(h.state) })).filter(c=>c.res);
+  if(cols.length < 2){
+    $('cmpTable').innerHTML = '<div class="hist-empty">Ces projets ne peuvent pas être recalculés.</div>';
+  } else {
+    let html = '<table class="cmp-table"><thead><tr><th></th>';
+    cols.forEach(c=>{ html += `<th>${c.label.replace(/</g,'&lt;')}</th>`; });
+    html += '</tr></thead><tbody>';
+    CMP_ROWS.forEach(([name, fmt, better])=>{
+      html += `<tr><td>${name}</td>`;
+      let bestI = -1, worstI = -1;
+      if(better && CMP_RAW[name]){
+        const vals = cols.map(c=>CMP_RAW[name](c.res));
+        const valid = vals.map((v,i)=>({v,i})).filter(o=>isFinite(o.v));
+        if(valid.length > 1){
+          const sorted = [...valid].sort((a,b)=> better==='high' ? b.v-a.v : a.v-b.v);
+          bestI = sorted[0].i; worstI = sorted[sorted.length-1].i;
+        }
+      }
+      cols.forEach((c,i)=>{
+        const cls = i===bestI ? ' class="cmp-best"' : (i===worstI ? ' class="cmp-worst"' : '');
+        html += `<td${cls}>${fmt(c.res)}</td>`;
+      });
+      html += '</tr>';
+    });
+    html += '</tbody></table>';
+    $('cmpTable').innerHTML = html;
+  }
+  $('cmpOverlay').classList.add('open');
+}
+$('cmpBtn').addEventListener('click', openCompare);
+$('cmpClose').addEventListener('click', ()=> $('cmpOverlay').classList.remove('open'));
+
+function collectState(){
+  const state = { mode, montantsLocked, coutsLocked, finLocked,
+                  projectName: $('projectName').value };
+  numInputs.forEach(id=> state[id] = $(id).value);
+  Object.entries(sliders).forEach(([key,id])=> state[id] = $(id).value);
+  return state;
+}
+
+function openNameModal(){
+  const typed = $('projectName').value.trim();
+  const fallback = mode === 'objectif'
+    ? `Projet ${fmtInt(parseNum(heroCurrent() || '0'))} m²`
+    : `Projet ${new Date().toLocaleDateString('fr-CH')}`;
+  $('nameModalInput').value = typed || fallback;
+  $('nameModalInput').placeholder = fallback;
+  $('nameModalBackdrop').classList.add('open');
+  setTimeout(()=>{ $('nameModalInput').focus(); $('nameModalInput').select(); }, 50);
+}
+function closeNameModal(){ $('nameModalBackdrop').classList.remove('open'); }
+
+$('finalSaveBtn').addEventListener('click', openNameModal);
+$('nameModalCancel').addEventListener('click', closeNameModal);
+$('nameModalBackdrop').addEventListener('click', (e)=>{ if(e.target.id === 'nameModalBackdrop') closeNameModal(); });
+$('nameModalInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter') confirmNamedSave(); if(e.key === 'Escape') closeNameModal(); });
+$('nameModalSave').addEventListener('click', confirmNamedSave);
+
+function confirmNamedSave(){
+  const raw = $('nameModalInput').value.trim();
+  const finalName = raw || $('nameModalInput').placeholder;
+  const entry = {
+    id: Date.now(),
+    ts: new Date().toLocaleString('fr-CH', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}),
+    label: finalName,
+    state: collectState()
+  };
+  const list = loadHistory();
+  list.unshift(entry);
+  if(list.length > 20) list.length = 20;
+  saveHistoryList(list);
+  $('projectName').value = finalName;   // l'en-tête reflète le nom retenu
+  entry.state.projectName = finalName;
+  saveHistoryList(loadHistory());
+  saveState();
+  closeNameModal();
+  const fbtn = $('finalSaveBtn');
+  const original2 = fbtn.textContent;
+  fbtn.textContent = '✓ "' + finalName + '" enregistré';
+  setTimeout(()=>{ fbtn.textContent = original2; }, 1800);
+}
+
+/* ---------- state persistence (autosave) ---------- */
+const DEFAULTS = {
+  mode:'objectif', montantsLocked:false, coutsLocked:false, finLocked:false, projectName:'',
+  in_terrain:"1'500'000", in_parcelle:"900", in_cc:"4'000", in_pv:"16'000", in_duree:"3.0", in_surface:"300", in_logsize:"100",
+  sl_cible:12, sl_fraisacq:4, sl_imprev:5, sl_comm:4, sl_tva:8.1, sl_is:14.7, sl_credit:80, sl_taux:3, sl_util:50, sl_coef:0.8
+};
+
+function applyState(state){
+  mode = state.mode || 'objectif';
+  $('projectName').value = state.projectName || '';
+  montantsLocked = !!state.montantsLocked;
+  // rétrocompatibilité : anciens projets enregistrés avec un seul verrou "tauxLocked"
+  coutsLocked = state.coutsLocked !== undefined ? !!state.coutsLocked : !!state.tauxLocked;
+  finLocked = state.finLocked !== undefined ? !!state.finLocked : !!state.tauxLocked;
+  applyModeUI();
+  numInputs.forEach(id=>{ if(state[id] !== undefined) $(id).value = state[id]; });
   Object.entries(sliders).forEach(([key,id])=>{
-    $(id).value = DEFAULTS[id];
-    $('val_'+key).textContent = parseFloat(DEFAULTS[id]).toFixed(1)+'%';
+    if(state[id] !== undefined){
+      $(id).value = state[id];
+      $('val_'+key).textContent = key === 'coef'
+        ? parseFloat(state[id]).toFixed(2)
+        : parseFloat(state[id]).toFixed(1)+'%';
+    }
   });
+  applyLockUI();
+}
+
+function saveState(){
+  const json = JSON.stringify(collectState());
+  try{ localStorage.setItem(STORAGE_KEY, json); }
+  catch(e){ memoryFallback = json; }
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  if(memoryFallback) return JSON.parse(memoryFallback);
+  return null;
+}
+
+$('resetBtn').addEventListener('click', ()=>{
+  applyState(DEFAULTS);
+  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
+  memoryFallback = null;
   compute();
 });
 
-/* ============================================================
-   SAUVEGARDE — localStorage
-   ============================================================ */
-const STORAGE_KEY = 'simulateur_promoteur_calculs_v1';
 
-function storageAvailable(){
-  try{
-    const t = '__test__';
-    localStorage.setItem(t, t);
-    localStorage.removeItem(t);
-    return true;
-  }catch(e){ return false; }
-}
+/* --- chiffre principal : rouleaux type machine à sous ---
+   Chaque chiffre est une cellule à débordement masqué contenant une bande 0-9
+   répétée. On part d'une répétition basse et on remonte la bande vers la position
+   finale : visuellement les chiffres défilent de haut en bas, puis se calent
+   l'un après l'autre (décalage par colonne). */
+const OD_REPEATS = 4;                 // longueur de course de la bande
+const OD_EASE = 'cubic-bezier(.16,.84,.28,1)';
+const OD_HERO = { dur:780, stagger:75 };   // grand chiffre
+const OD_PEEK = { dur:520, stagger:32 };   // bandeau replié, plus discret
 
-function loadAll(){
-  if(!storageAvailable()) return [];
-  try{
-    return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-  }catch(e){ return []; }
-}
+let heroInstant = false;              // vrai pendant un changement de mode
+let heroDragging = false;             // vrai pendant un glissement
 
-function saveAll(arr){
-  if(!storageAvailable()) return false;
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(arr));
-    return true;
-  }catch(e){ return false; }
-}
-
-function getCurrentState(){
-  const inputs = {};
-  numInputs.forEach(id => inputs[id] = $(id).value);
-  const sl = {};
-  Object.values(sliders).forEach(id => sl[id] = $(id).value);
-  return { inputs, sliders: sl };
-}
-
-function applyState(state){
-  if(!state) return;
-  numInputs.forEach(id=>{
-    if(state.inputs && state.inputs[id] !== undefined) $(id).value = state.inputs[id];
-  });
-  Object.entries(sliders).forEach(([key,id])=>{
-    if(state.sliders && state.sliders[id] !== undefined){
-      $(id).value = state.sliders[id];
-      $('val_'+key).textContent = parseFloat(state.sliders[id]).toFixed(1)+'%';
+function buildStrip(){
+  const strip = document.createElement('span');
+  strip.className = 'od-strip';
+  for(let r=0; r<OD_REPEATS; r++){
+    for(let d=0; d<10; d++){
+      const s = document.createElement('span');
+      s.className = 'od-digit';
+      s.textContent = d;
+      strip.appendChild(s);
     }
-  });
-  compute();
-  window.scrollTo({ top:0, behavior:'smooth' });
+  }
+  return strip;
 }
 
-let toastTimer = null;
-function toast(msg){
-  const t = $('toast');
-  t.textContent = msg;
-  t.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=> t.classList.remove('show'), 2200);
+function sameShape(a, b){
+  if(a === null || a === undefined || a.length !== b.length) return false;
+  for(let i=0;i<a.length;i++){
+    const da = a[i] >= '0' && a[i] <= '9';
+    const db = b[i] >= '0' && b[i] <= '9';
+    if(da !== db) return false;
+    if(!da && a[i] !== b[i]) return false;
+  }
+  return true;
 }
 
-function saveCalc(){
-  if(!storageAvailable()){
-    toast("Stockage indisponible ici — déploie l'app pour sauvegarder.");
+/* Rouleau générique : utilisable sur n'importe quel élément.
+   L'état courant est porté par l'élément lui-même (dataset.rollStr). */
+function rollLayout(el, str){
+  el.innerHTML = '';
+  for(const ch of str){
+    if(ch >= '0' && ch <= '9'){
+      const cell = document.createElement('span');
+      cell.className = 'od-cell';
+      cell.appendChild(buildStrip());
+      el.appendChild(cell);
+    } else {
+      const sep = document.createElement('span');
+      sep.className = 'od-sep';
+      sep.textContent = ch;
+      el.appendChild(sep);
+    }
+  }
+}
+
+function rollPaint(el, str, animate, cfg){
+  cfg = cfg || OD_HERO;
+  const prev = el.dataset.rollStr;
+  if(!sameShape(prev, str)) rollLayout(el, str);
+
+  const cells = el.querySelectorAll('.od-cell');
+  let ci = 0;
+  for(const ch of str){
+    if(ch < '0' || ch > '9') continue;
+    const d = +ch;
+    const strip = cells[ci].firstChild;
+    const target = `translateY(-${d}em)`;
+    if(animate){
+      const from = (OD_REPEATS-1)*10 + d;
+      strip.style.transition = 'none';
+      strip.style.transform = `translateY(-${from}em)`;
+      void strip.offsetHeight;                       // fige la position de départ
+      strip.style.transition = `transform ${cfg.dur}ms ${OD_EASE} ${ci*cfg.stagger}ms`;
+      strip.style.transform = target;
+    } else {
+      strip.style.transition = 'none';
+      strip.style.transform = target;
+    }
+    ci++;
+  }
+  el.dataset.rollStr = str;
+}
+
+function rollClear(el){
+  el.innerHTML = '—';
+  delete el.dataset.rollStr;
+}
+
+/* --- valeurs en attente : le grand chiffre et le bandeau roulent ensemble --- */
+let pendingHero = null, pendingPeek = null, rollTimer = null;
+function heroCurrent(){ return $('heroValue').dataset.rollStr || null; }
+
+function flushRolls(){
+  if(rollTimer){ clearTimeout(rollTimer); rollTimer = null; }
+  if(pendingHero !== null && pendingHero !== heroCurrent()){
+    rollPaint($('heroValue'), pendingHero, true, OD_HERO);
+  }
+  if(pendingPeek){
+    if(pendingPeek.rn   !== $('peek_rn').dataset.rollStr)   rollPaint($('peek_rn'),   pendingPeek.rn,   true, OD_PEEK);
+    if(pendingPeek.rann !== $('peek_rann').dataset.rollStr) rollPaint($('peek_rann'), pendingPeek.rann, true, OD_PEEK);
+  }
+  pendingHero = null; pendingPeek = null;
+}
+function scheduleRolls(){
+  if(rollTimer) clearTimeout(rollTimer);
+  rollTimer = setTimeout(flushRolls, 140);
+}
+
+function setPeekNumbers(rnStr, rannStr){
+  if(heroInstant){
+    rollPaint($('peek_rn'), rnStr, false, OD_PEEK);
+    rollPaint($('peek_rann'), rannStr, false, OD_PEEK);
+    pendingPeek = null;
     return;
   }
-  let name = $('saveName').value.trim();
-  if(!name){
-    name = 'Calcul du ' + new Date().toLocaleDateString('fr-CH');
+  if(rnStr === $('peek_rn').dataset.rollStr && rannStr === $('peek_rann').dataset.rollStr){
+    pendingPeek = null; return;
   }
-  const rec = {
-    id: Date.now().toString(36) + Math.random().toString(36).slice(2,6),
-    name,
-    date: new Date().toISOString(),
-    state: getCurrentState(),
-    surface: $('heroSurface').textContent,
-    rann: $('v_rann').textContent
+  pendingPeek = { rn:rnStr, rann:rannStr };
+  scheduleRolls();
+}
+
+function clearPeekNumbers(){
+  pendingPeek = null;
+  rollClear($('peek_rn')); rollClear($('peek_rann'));
+}
+
+function setHeroNumber(target, formatter){
+  const el = $('heroValue');
+  if(target === null || !isFinite(target)){
+    if(rollTimer){ clearTimeout(rollTimer); rollTimer = null; }
+    pendingHero = null;
+    rollClear(el);
+    return;
+  }
+  const str = formatter(target);
+
+  if(heroInstant){                     // changement de mode : bascule sèche
+    if(rollTimer){ clearTimeout(rollTimer); rollTimer = null; }
+    pendingHero = null;
+    rollPaint(el, str, false, OD_HERO);
+    return;
+  }
+  if(str === heroCurrent()){ pendingHero = null; return; }
+
+  // Le chiffre ne change jamais sans son roulement : on retient la nouvelle
+  // valeur et on la joue dès que la saisie se stabilise.
+  pendingHero = str;
+  scheduleRolls();
+}
+
+document.addEventListener('pointerdown', e=>{
+  if(e.target.matches('input[type=range]') || e.target.closest('.field')) heroDragging = true;
+}, true);
+function endHeroDrag(){
+  if(!heroDragging) return;
+  heroDragging = false;
+  flushRolls();
+}
+document.addEventListener('pointerup', endHeroDrag, true);
+document.addEventListener('pointercancel', endHeroDrag, true);
+
+/* recalage des bandes après le changement d'échelle du rectangle */
+document.addEventListener('transitionend', e=>{
+  if(e.target.classList && e.target.classList.contains('hero-value') && e.propertyName === 'font-size'){
+    const s = heroCurrent();
+    if(s) rollPaint($('heroValue'), s, false, OD_HERO);
+  }
+}, true);
+
+/* --- positionne les repères de valeurs usuelles sur les pistes --- */
+function layoutUsualBands(){
+  document.querySelectorAll('.usual-band').forEach(band=>{
+    const input = $(band.dataset.for);
+    if(!input) return;
+    const min = parseFloat(input.min), max = parseFloat(input.max);
+    const umin = parseFloat(band.dataset.umin), umax = parseFloat(band.dataset.umax);
+    const span = max - min;
+    if(!(span > 0)) return;
+    let left = (umin-min)/span*100;
+    let width = (umax-umin)/span*100;
+    if(width < 1.2){ left -= (1.2-width)/2; width = 1.2; }   // repère ponctuel visible
+    band.style.left = Math.max(0, left) + '%';
+    band.style.width = Math.min(100, width) + '%';
+    band.title = `Valeurs usuelles : ${umin}–${umax}`;
+  });
+}
+
+/* ---------- core calculation ---------- */
+
+// TRI par bissection sur les flux semestriels
+function irrSemi(flows){
+  const npv = r => flows.reduce((s,f,i)=> s + f/Math.pow(1+r,i), 0);
+  let lo = -0.999, hi = 5;
+  let nlo = npv(lo), nhi = npv(hi);
+  if(!isFinite(nlo) || !isFinite(nhi) || nlo*nhi > 0) return NaN;
+  for(let k=0;k<200;k++){
+    const mid = (lo+hi)/2, nm = npv(mid);
+    if(nlo*nm <= 0){ hi = mid; } else { lo = mid; nlo = nm; }
+  }
+  return (lo+hi)/2;
+}
+
+// Coefficients par m² à partir des paramètres saisis
+function mkParams(o){
+  return {
+    A: o.cc*(1+o.tva)*(1+o.imprev),                 // construction incl. TVA + imprévus
+    TAXE_M2: Math.min(47, 0.025*o.cc*(1+o.tva)),    // taxe d'équipement GE, plafond 2.5%
+    tAcq: o.terrain*(1+o.fraisAcq),
+    pv:o.pv, credit:o.credit, taux:o.taux, util:o.util,
+    duree:o.duree, is:o.is, commRate:o.commRate
   };
-  const all = loadAll();
-  all.unshift(rec);
-  saveAll(all);
-  $('saveName').value = '';
-  renderList();
-  toast('Calcul enregistré');
 }
 
-function deleteCalc(id){
-  const all = loadAll().filter(r => r.id !== id);
-  saveAll(all);
-  renderList();
-  toast('Calcul supprimé');
+// Bilan complet + flux de fonds propres semestriels
+function metrics(S, p){
+  const n = Math.max(1, Math.round(p.duree*2));
+  const ccons = S*p.A;
+  const taxe  = S*p.TAXE_M2;
+  const cterr = p.tAcq;
+  const ctot  = ccons + taxe + cterr;
+  const fin   = ccons*p.credit;
+  const apport= ctot - fin;
+  const inter = fin*p.taux*p.duree*p.util;
+  const ca    = S*p.pv;
+  const comm  = ca*p.commRate;
+  const rai   = ca - ctot - inter - comm;
+  const impot = Math.max(rai,0)*p.is;
+  const rn    = rai - impot;
+
+  // terrain + taxe au départ, fonds propres de construction étalés, vente en fin
+  const flows = new Array(n+1).fill(0);
+  flows[0] = -(cterr + taxe);
+  const perSem = ccons*(1-p.credit)/n;
+  for(let k=1;k<=n;k++) flows[k] -= perSem;
+  flows[n] += ca - comm - fin - inter - impot;
+
+  const iSemi = irrSemi(flows);
+  const rann = isFinite(iSemi) ? Math.pow(1+iSemi,2) - 1 : NaN;
+  return {ccons,taxe,cterr,ctot,fin,apport,inter,ca,comm,rai,impot,rn,rann};
 }
 
-function renderList(){
-  const all = loadAll();
-  const list = $('savedList');
-  const empty = $('savedEmpty');
-  $('savedCount').textContent = all.length;
-  list.innerHTML = '';
+// Surface nécessaire pour atteindre la cible
+function solveSurface(target, p){
+  const f = S => { const m = metrics(S,p); return isFinite(m.rann) ? m.rann - target : -1; };
+  let lo = 0.01, hi = 1e6;
+  if(f(hi) < 0) return NaN;
+  for(let k=0;k<160;k++){
+    const mid=(lo+hi)/2;
+    if(f(mid) < 0) lo=mid; else hi=mid;
+  }
+  return hi;
+}
 
-  if(all.length === 0){
-    empty.style.display = 'block';
+// Prix max du terrain pour atteindre la cible à surface donnée
+function solveTerrain(target, S, o){
+  const f = T => {
+    const m = metrics(S, mkParams(Object.assign({}, o, {terrain:T})));
+    return isFinite(m.rann) ? m.rann - target : -1;
+  };
+  if(f(0) < 0) return NaN;
+  let lo = 0, hi = 1e9;
+  for(let k=0;k<160;k++){
+    const mid=(lo+hi)/2;
+    if(f(mid) > 0) lo=mid; else hi=mid;
+  }
+  return lo;
+}
+
+
+function updateGauge(S, surfaceMax){
+  const row = $('gaugeRow');
+  if(!(surfaceMax > 0) || !(S > 0)){
+    row.style.display = 'none';
     return;
   }
-  empty.style.display = 'none';
-
-  all.forEach(rec=>{
-    const item = document.createElement('div');
-    item.className = 'saved-item';
-
-    const main = document.createElement('div');
-    main.className = 'si-main';
-
-    const nameEl = document.createElement('div');
-    nameEl.className = 'si-name';
-    nameEl.textContent = rec.name;
-
-    const metaEl = document.createElement('div');
-    metaEl.className = 'si-meta';
-    const d = new Date(rec.date);
-    const dateStr = isNaN(d) ? '' :
-      d.toLocaleDateString('fr-CH') + ' ' +
-      d.toLocaleTimeString('fr-CH', {hour:'2-digit', minute:'2-digit'});
-    metaEl.innerHTML = '';
-    const surfSpan = document.createElement('span');
-    surfSpan.className = 'surf';
-    surfSpan.textContent = (rec.surface || '—') + ' m²';
-    metaEl.appendChild(surfSpan);
-    metaEl.appendChild(document.createTextNode(
-      ' · ' + (rec.rann || '—') + (dateStr ? ' · ' + dateStr : '')
-    ));
-
-    main.appendChild(nameEl);
-    main.appendChild(metaEl);
-
-    const actions = document.createElement('div');
-    actions.className = 'saved-actions';
-
-    const loadBtn = document.createElement('button');
-    loadBtn.className = 'mini-btn load';
-    loadBtn.textContent = 'Charger';
-    loadBtn.addEventListener('click', ()=> applyState(rec.state));
-
-    const delBtn = document.createElement('button');
-    delBtn.className = 'mini-btn del';
-    delBtn.textContent = 'Suppr.';
-    delBtn.addEventListener('click', ()=> deleteCalc(rec.id));
-
-    actions.appendChild(loadBtn);
-    actions.appendChild(delBtn);
-
-    item.appendChild(main);
-    item.appendChild(actions);
-    list.appendChild(item);
-  });
+  row.style.display = '';
+  const ratio = S/surfaceMax;
+  const over = ratio > 1;
+  $('gaugeFill').style.width = Math.min(100, ratio*100).toFixed(1) + '%';
+  $('gaugeFill').classList.toggle('over', over);
+  $('gaugeLabel').textContent = `${fmtInt(S)} m² sur ${fmtInt(surfaceMax)} m² possibles`;
+  $('gaugePct').textContent = (ratio*100).toFixed(0) + '%';
+  $('gaugePct').style.color = over ? 'var(--coral)' : '';
 }
 
-$('saveBtn').addEventListener('click', saveCalc);
-$('saveName').addEventListener('keydown', e=>{ if(e.key === 'Enter') saveCalc(); });
-
-/* ============================================================
-   CALCUL
-   ============================================================ */
 function compute(){
-  const terrain = parseNum($('in_terrain').value);
-  const cc = parseNum($('in_cc').value);
-  const pv = parseNum($('in_pv').value);
-  const duree = Math.max(parseNum($('in_duree').value), 0.1);
-
+  const raw = {
+    terrain: parseNum($('in_terrain').value),
+    cc: parseNum($('in_cc').value),
+    pv: parseNum($('in_pv').value),
+    duree: Math.max(parseNum($('in_duree').value), 0.5),
+    tva: parseFloat($('sl_tva').value)/100,
+    fraisAcq: parseFloat($('sl_fraisacq').value)/100,
+    is: parseFloat($('sl_is').value)/100,
+    credit: parseFloat($('sl_credit').value)/100,
+    taux: parseFloat($('sl_taux').value)/100,
+    util: parseFloat($('sl_util').value)/100,
+    imprev: parseFloat($('sl_imprev').value)/100,
+    commRate: parseFloat($('sl_comm').value)/100
+  };
   const cible = parseFloat($('sl_cible').value)/100;
-  const fraisAcq = parseFloat($('sl_fraisacq').value)/100;
-  const tva = parseFloat($('sl_tva').value)/100;
-  const is = parseFloat($('sl_is').value)/100;
-  const credit = parseFloat($('sl_credit').value)/100;
-  const taux = parseFloat($('sl_taux').value)/100;
-  const util = parseFloat($('sl_util').value)/100;
+  const coef = parseFloat($('sl_coef').value);
+  const parcelle = parseNum($('in_parcelle').value);
+  const logsize = Math.max(parseNum($('in_logsize').value), 1);
+  const surfaceMax = parcelle * coef;
+  $('maxBuildablePill').textContent = parcelle > 0 ? (fmtInt(surfaceMax) + ' m²') : '— m²';
 
-  const tAcq = terrain*(1+fraisAcq);
-  const rc = Math.pow(1+cible, duree) - 1;
-  const K = cc*(1+tva)*(1 + credit*taux*duree*util);
-  const M = cc*(1+tva)*(1-credit);
+  let p = mkParams(raw);
+  const hero = $('hero'), heroBadge = $('heroBadge'), heroBadgeText = $('heroBadgeText');
+  const heroValue = $('heroValue'), heroUnit = $('heroUnit'), heroLabel = $('heroLabel');
 
-  const heroSurface = $('heroSurface');
-  const heroBadge = $('heroBadge');
-  const heroBadgeText = $('heroBadgeText');
+  let S = null, impossible = false, reason = '', terrainMax = null;
 
-  let impossible = false, reason = '';
-  if(pv <= K){ impossible = true; reason = 'Prix de vente ≤ coût par m²'; }
+  if(mode === 'objectif'){
+    heroLabel.textContent = 'Surface nécessaire';
+    heroUnit.textContent = 'm² SBP';
 
-  const denom = (1-is)*(pv-K) - rc*M;
-  if(!impossible && denom <= 0){ impossible = true; reason = 'Objectif inatteignable'; }
+    const exact = solveSurface(cible, p);
+    if(!isFinite(exact)){
+      impossible = true; reason = 'Objectif inatteignable avec ces hypothèses';
+    } else {
+      S = Math.ceil(exact);
+      if(parcelle > 0 && S > surfaceMax){
+        impossible = true;
+        reason = `Dépasse la surface constructible (max ${fmtInt(surfaceMax)} m²)`;
+      } else {
+        setHeroNumber(S, v => fmtInt(v));
+        heroBadge.classList.remove('warn'); hero.classList.remove('warn');
+        heroBadgeText.textContent = 'objectif atteignable';
+      }
+    }
+  } else if(mode === 'surface'){
+    heroLabel.textContent = 'Rendement annualisé (TRI)';
+    heroUnit.textContent = '/an';
+
+    S = Math.max(parseNum($('in_surface').value), 0);
+    if(S <= 0){ impossible = true; reason = 'Indique une surface > 0'; }
+    else if(parcelle > 0 && S > surfaceMax){
+      impossible = true;
+      reason = `Surface > constructible max (${fmtInt(surfaceMax)} m²)`;
+    }
+  } else { // mode terrain
+    heroLabel.textContent = 'Prix max du terrain';
+    heroUnit.textContent = 'CHF';
+
+    S = Math.max(parseNum($('in_surface').value), 0);
+    if(S <= 0){ impossible = true; reason = 'Indique une surface > 0'; }
+    else if(parcelle > 0 && S > surfaceMax){
+      impossible = true;
+      reason = `Surface > constructible max (${fmtInt(surfaceMax)} m²)`;
+    } else {
+      terrainMax = solveTerrain(cible, S, raw);
+      if(!isFinite(terrainMax) || terrainMax <= 0){
+        impossible = true;
+        reason = 'Cible inatteignable même avec un terrain gratuit';
+      } else {
+        setHeroNumber(terrainMax, v => fmtInt(v));
+        heroBadge.classList.remove('warn'); hero.classList.remove('warn');
+        heroBadgeText.textContent = `pour ${fmtPct(cible)}/an sur ${fmtInt(S)} m²`;
+        // recalcule le bilan avec ce prix de terrain
+        p = mkParams(Object.assign({}, raw, {terrain: terrainMax}));
+      }
+    }
+  }
+
+  const BLANK = ['v_ccons','v_taxe','v_cterr','v_ctot','v_fin','v_apport','v_int','v_ca','v_comm','v_impot','v_rn','v_rann','v_nblog','v_marge','v_poids'];
 
   if(impossible){
-    heroSurface.textContent = '—';
-    heroBadge.classList.add('warn');
+    setHeroNumber(null);
+    heroBadge.classList.add('warn'); hero.classList.add('warn');
     heroBadgeText.textContent = reason;
-    ['v_ccons','v_cterr','v_ctot','v_fin','v_apport','v_int','v_ca','v_impot','v_rn','v_rann'].forEach(id=> $(id).textContent='—');
+    BLANK.forEach(id=> $(id).textContent='—');
     $('verifSurf').textContent = '— m²';
+    updateGauge(S, surfaceMax);
+    $('alertBox').classList.remove('show');
+    clearPeekNumbers();
+    renderWaterfall({ccons:0,cterr:0,taxe:0,inter:0,comm:0,impot:0,rn:0});
+    renderDiagnostic({rann:NaN}, {marge:NaN, poids:NaN, partFP:NaN, ccM2:raw.cc, pv:raw.pv});
+    saveState();
     return;
   }
 
-  const exact = tAcq*(rc+1-is) / denom;
-  const S = Math.ceil(exact);
+  const m = metrics(S, p);
+  const margeCA = m.ca > 0 ? m.rn/m.ca : NaN;
+  const poids = m.ctot > 0 ? m.cterr/m.ctot : NaN;
+  const partFP = m.ctot > 0 ? m.apport/m.ctot : 1;
 
-  heroSurface.textContent = fmtInt(S);
-  heroBadge.classList.remove('warn');
-  heroBadgeText.textContent = 'objectif atteignable';
+  if(mode === 'surface'){
+    if(!isFinite(m.rann)){
+      setHeroNumber(null);
+      heroBadge.classList.add('warn'); hero.classList.add('warn');
+      heroBadgeText.textContent = 'Rendement non calculable';
+    } else {
+      setHeroNumber(m.rann*100, v => v.toFixed(1));
+      heroBadge.classList.remove('warn'); hero.classList.remove('warn');
+      heroBadgeText.textContent = `sur ${fmtInt(S)} m² · marge ${fmtPct(margeCA)} du CA`;
+    }
+  }
 
-  // verification
-  const ccons = S*cc*(1+tva);
-  const cterr = tAcq;
-  const ctot = ccons + cterr;
-  const fin = ccons*credit;
-  const apport = ctot - fin;
-  const inter = fin*taux*duree*util;
-  const ca = S*pv;
-  const rai = ca - ctot - inter;
-  const impot = Math.max(rai,0)*is;
-  const rn = rai - impot;
-  const rtot = apport !== 0 ? rn/apport : NaN;
-  const rann = Math.pow(1+rtot, 1/duree) - 1;
+  // --- alertes de plausibilité ---
+  const alerts = [];
+  if(partFP < 0.15){
+    alerts.push(`Apport de seulement ${fmtPct(partFP)} du coût total : le rendement repose surtout sur l'effet de levier. Peu de banques suivront un montage aussi tendu.`);
+  }
+  if(isFinite(margeCA) && margeCA < 0.08 && margeCA > 0){
+    alerts.push(`Marge nette de ${fmtPct(margeCA)} du CA : faible coussin pour absorber un aléa de chantier ou de marché.`);
+  }
+  if(isFinite(poids) && poids > 0.30){
+    alerts.push(`Le terrain pèse ${fmtPct(poids)} du coût total (repère usuel : 25-30%).`);
+  }
+  if(alerts.length){
+    $('alertText').textContent = alerts.join(' · ');
+    $('alertBox').classList.add('show');
+  } else {
+    $('alertBox').classList.remove('show');
+  }
 
+  updateGauge(S, surfaceMax);
   $('verifSurf').textContent = fmtInt(S) + ' m²';
-  $('v_ccons').textContent = fmtCHF(ccons);
-  $('v_cterr').textContent = fmtCHF(cterr);
-  $('v_ctot').textContent = fmtCHF(ctot);
-  $('v_fin').textContent = fmtCHF(fin);
-  $('v_apport').textContent = fmtCHF(apport);
-  $('v_int').textContent = '−' + fmtCHF(inter);
-  $('v_ca').textContent = fmtCHF(ca);
-  $('v_impot').textContent = '−' + fmtCHF(impot);
-  $('v_rn').textContent = fmtCHF(rn);
-  $('v_rann').textContent = fmtPct(rann) + '/an';
+  $('v_ccons').textContent = fmtCHF(m.ccons);
+  $('v_taxe').textContent = '−' + fmtCHF(m.taxe);
+  $('v_cterr').textContent = fmtCHF(m.cterr);
+  $('v_ctot').textContent = fmtCHF(m.ctot);
+  $('v_fin').textContent = fmtCHF(m.fin);
+  $('v_apport').textContent = fmtCHF(m.apport);
+  $('v_int').textContent = '−' + fmtCHF(m.inter);
+  $('v_ca').textContent = fmtCHF(m.ca);
+  $('v_comm').textContent = '−' + fmtCHF(m.comm);
+  $('v_impot').textContent = '−' + fmtCHF(m.impot);
+  $('v_rn').textContent = fmtCHF(m.rn);
+  $('v_rann').textContent = isFinite(m.rann) ? fmtPct(m.rann) + '/an' : '—';
+  $('v_nblog').textContent = Math.max(1, Math.round(S/logsize)) + ' lots';
+  $('v_marge').textContent = isFinite(margeCA) ? fmtPct(margeCA) : '—';
+  setPeekNumbers(fmtCHF(m.rn), isFinite(m.rann) ? fmtPct(m.rann)+'/an' : '—');
+  renderWaterfall(m);
+  renderDiagnostic(m, {marge:margeCA, poids, partFP, ccM2:raw.cc, pv:raw.pv});
+  $('v_poids').textContent = isFinite(poids) ? fmtPct(poids) : '—';
+
+  saveState();
 }
 
+
+
+/* --- mesure les hauteurs réelles pour que le panneau ne recouvre pas la nav --- */
+function measureChrome(){
+  const nav = $('pageNav');
+  const peek = $('rsPeek');
+  if(nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
+  if(peek) document.documentElement.style.setProperty('--peek-h', peek.offsetHeight + 'px');
+}
+window.addEventListener('resize', ()=>{ measureChrome(); measureCompactGain(); });
+
+
+/* ================= PANNEAU RÉSULTAT COULISSANT ================= */
+const resultSheet = $('resultSheet');
+const rsPeek = $('rsPeek');
+const rsBody = $('rsBody');
+
+function openResult(){
+  resultSheet.classList.add('open');
+  shell.classList.add('compact');      // rectangle en petit format, comme au défilement
+}
+function closeResult(){
+  resultSheet.classList.remove('open');
+  updateCompact();                     // reprend l'état dicté par le défilement
+}
+function toggleResult(){ resultSheet.classList.contains('open') ? closeResult() : openResult(); }
+
+let rsDrag = null;
+rsPeek.addEventListener('pointerdown', e=>{
+  rsDrag = { y0:e.clientY, moved:false, wasOpen:resultSheet.classList.contains('open') };
+  rsPeek.setPointerCapture(e.pointerId);
+  resultSheet.classList.add('dragging');
+});
+rsPeek.addEventListener('pointermove', e=>{
+  if(!rsDrag) return;
+  const dy = e.clientY - rsDrag.y0;
+  if(Math.abs(dy) > 4) rsDrag.moved = true;
+  const h = resultSheet.offsetHeight;
+  const peek = parseFloat(getComputedStyle(resultSheet).getPropertyValue('--peek-h')) || 92;
+  const base = rsDrag.wasOpen ? 0 : (h - peek);
+  const y = Math.max(0, Math.min(h - peek, base + dy));
+  resultSheet.style.transform = `translateY(${y}px)`;
+});
+function endRsDrag(e){
+  if(!rsDrag) return;
+  resultSheet.classList.remove('dragging');
+  resultSheet.style.transform = '';
+  const dy = e.clientY - rsDrag.y0;
+  if(!rsDrag.moved){ toggleResult(); }
+  else if(dy < -40) openResult();
+  else if(dy > 40) closeResult();
+  rsDrag = null;
+}
+rsPeek.addEventListener('pointerup', endRsDrag);
+rsPeek.addEventListener('pointercancel', ()=>{
+  if(rsDrag){ resultSheet.classList.remove('dragging'); resultSheet.style.transform=''; rsDrag=null; }
+});
+
+/* ================= CASCADE CA -> RÉSULTAT NET ================= */
+function wfColors(){
+  const cs = getComputedStyle(document.documentElement);
+  const v = n => cs.getPropertyValue('--wf-'+n).trim();
+  return { construction:v(1), terrain:v(2), taxe:v(3),
+           interets:v(4), commercialisation:v(5), impot:v(6), net:v(7) };
+}
+function renderWaterfall(m){
+  const WF_COLORS = wfColors();
+  const parts = [
+    ['Construction',        m.ccons, WF_COLORS.construction],
+    ['Terrain',             m.cterr, WF_COLORS.terrain],
+    ['Taxe équipement',     m.taxe,  WF_COLORS.taxe],
+    ['Intérêts',            m.inter, WF_COLORS.interets],
+    ['Commercialisation',   m.comm,  WF_COLORS.commercialisation],
+    ['Impôt',               m.impot, WF_COLORS.impot],
+    ['Résultat net',        Math.max(0,m.rn), WF_COLORS.net],
+  ];
+  const total = parts.reduce((s,p)=>s+p[1],0);
+  const bar = $('wfBar'), leg = $('wfLegend');
+  if(!(total > 0)){ bar.innerHTML=''; leg.innerHTML=''; return; }
+  bar.innerHTML = parts.filter(p=>p[1]>0).map(p=>
+    `<div class="wf-seg" style="width:${(p[1]/total*100).toFixed(2)}%;background:${p[2]}" title="${p[0]}"></div>`
+  ).join('');
+  leg.innerHTML = parts.map(p=>
+    `<span class="wf-item"><span class="wf-chip" style="background:${p[2]}"></span>`+
+    `<span class="wf-name">${p[0]}</span>`+
+    `<span class="wf-val">${(p[1]/total*100).toFixed(1)}%</span></span>`
+  ).join('');
+}
+
+/* ================= DIAGNOSTIC VS REPÈRES GENEVOIS ================= */
+/* Chaque indicateur est situé sur une échelle, avec la fourchette usuelle
+   matérialisée, pour qu'un chiffre isolé devienne interprétable. */
+const DIAG = [
+  { name:'Rendement (TRI)', unit:'pct', min:0, max:0.30, band:[0.12,0.20],
+    get:(m,c)=> m.rann, dir:'high', thr:[0.10,0.15],
+    note:'Attendu en promotion : 12–20%/an selon le risque.' },
+
+  { name:'Marge nette', unit:'pct', min:0, max:0.30, band:[0.08,0.15],
+    get:(m,c)=> c.marge, dir:'high', thr:[0.08,0.15],
+    note:'Sous 8% du CA, un aléa de chantier suffit à effacer la marge.' },
+
+  { name:'Poids du terrain', unit:'pct', min:0, max:0.70, band:[0,0.30],
+    get:(m,c)=> c.poids, dir:'low', thr:[0.30,0.25],
+    note:'Au-delà de 25–30% du coût total, le foncier absorbe la marge.' },
+
+  { name:'Apport / coût total', unit:'pct', min:0, max:0.60, band:[0.20,0.40],
+    get:(m,c)=> c.partFP, dir:'high', thr:[0.15,0.20],
+    note:'Sous 15%, le montage est trop tendu pour la plupart des banques.' },
+
+  { name:'Coût de construction', unit:'chf', min:2000, max:6500, band:[3500,4800],
+    get:(m,c)=> c.ccM2, dir:'low', thr:[5200,4800],
+    note:'Ordre de grandeur genevois : 3 500–4 800 CHF/m² SBP (CFC 2).' },
+
+  { name:'Prix de vente', unit:'chf', min:6000, max:24000, band:[11000,18000],
+    get:(m,c)=> c.pv, dir:'high', thr:[10000,13000],
+    note:'Fourchette genevoise courante : 11 000–18 000 CHF/m².' },
+];
+
+function diagStatus(v, dir, thr){
+  if(!isFinite(v)) return 'na';
+  const [bad, good] = thr;
+  if(dir === 'high') return v >= good ? 'good' : (v >= bad ? 'ok' : 'warn');
+  return v <= good ? 'good' : (v <= bad ? 'ok' : 'warn');
+}
+const DIAG_WORDS = { good:'confortable', ok:'acceptable', warn:'à surveiller', na:'—' };
+
+function renderDiagnostic(m, ctx){
+  const el = $('diagCard');
+  if(!el) return;
+  el.innerHTML = DIAG.map(d=>{
+    const v = d.get(m, ctx);
+    const st = diagStatus(v, d.dir, d.thr);
+    const pos = isFinite(v) ? Math.max(0, Math.min(100, (v - d.min)/(d.max - d.min)*100)) : 0;
+    const bl = (d.band[0] - d.min)/(d.max - d.min)*100;
+    const bw = (d.band[1] - d.band[0])/(d.max - d.min)*100;
+    const shown = !isFinite(v) ? '—'
+      : (d.unit === 'pct' ? fmtPct(v) + (d.name.startsWith('Rendement') ? '/an' : '')
+                          : fmtInt(v) + ' CHF/m²');
+    return `<div class="diag-row">
+      <div class="diag-head">
+        <span class="diag-name">${d.name}</span>
+        <span class="diag-val ${st}">${shown}</span>
+      </div>
+      <div class="diag-track">
+        <span class="diag-band" style="left:${bl.toFixed(1)}%;width:${bw.toFixed(1)}%"></span>
+        <span class="diag-mark ${st}" style="left:${pos.toFixed(1)}%"></span>
+      </div>
+      <div class="diag-foot">
+        <span class="diag-tag ${st}">${DIAG_WORDS[st]}</span>
+        <span class="diag-note">${d.note}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ================= GLISSER POUR MODIFIER ================= */
+const SCRUB_STEP = {   // variation par pixel de déplacement
+  in_terrain:2500, in_parcelle:2, in_cc:10, in_pv:25,
+  in_duree:0.02, in_surface:2, in_logsize:0.5
+};
+function isLockedInput(el){ return el.disabled; }
+Object.keys(SCRUB_STEP).forEach(id=>{
+  const el = $(id); if(!el) return;
+  const field = el.closest('.field');
+  if(field) field.classList.add('scrubbable');
+  let st = null;
+  el.addEventListener('pointerdown', e=>{
+    if(isLockedInput(el)) return;
+    st = { x0:e.clientX, v0:parseNum(el.value), moved:false, id:e.pointerId };
+  });
+  el.addEventListener('pointermove', e=>{
+    if(!st) return;
+    const dx = e.clientX - st.x0;
+    if(!st.moved && Math.abs(dx) < 5) return;
+    if(!st.moved){
+      st.moved = true;
+      el.setPointerCapture(st.id);
+      el.blur();
+      if(field) field.classList.add('scrubbing');
+    }
+    e.preventDefault();
+    let v = st.v0 + dx*SCRUB_STEP[id];
+    v = Math.max(id==='in_duree' ? 0.5 : 0, v);
+    el.value = (id==='in_duree') ? (Math.round(v*2)/2).toFixed(1) : fmtInt(v);
+    compute();
+  });
+  const endScrub = ()=>{
+    if(!st) return;
+    if(st.moved && field) field.classList.remove('scrubbing');
+    st = null;
+  };
+  el.addEventListener('pointerup', endScrub);
+  el.addEventListener('pointercancel', endScrub);
+});
+
+/* petite secousse du cadenas quand on tente de modifier une section verrouillée */
+function nudgeLock(btn){
+  if(!btn) return;
+  btn.animate(
+    [{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],
+    {duration:260, easing:'ease-in-out'}
+  );
+}
+
+/* ---------- pager horizontal ---------- */
+const pager = $('pager');
+const shell = $('scrollRoot');
+const pageEls = Array.from(document.querySelectorAll('.page'));
+const pageDots = Array.from(document.querySelectorAll('.page-dot'));
+const pageCount = pageEls.length;
+
+function currentPage(){
+  return Math.max(0, Math.min(pageCount-1, Math.round(pager.scrollLeft / pager.clientWidth)));
+}
+function syncDots(){
+  const i = currentPage();
+  pageDots.forEach((d,k)=> d.classList.toggle('active', k === i));
+}
+function goToPage(i){
+  const idx = Math.max(0, Math.min(pageCount-1, i));
+  pager.scrollTo({ left: idx * pager.clientWidth, behavior:'smooth' });
+}
+pageDots.forEach(d=> d.addEventListener('click', ()=> goToPage(parseInt(d.dataset.goto,10))));
+
+/* --- compactage de la zone fixe au défilement vertical --- */
+const COMPACT_ON = 44, COMPACT_OFF = 12;   // hystérésis : évite le clignotement
+
+/* Hauteur regagnée par la page lorsque la zone fixe se replie.
+   Mesurée en désactivant les transitions, sinon on lirait une valeur en cours d'animation. */
+let COMPACT_GAIN = 0;
+function measureCompactGain(){
+  const wasCompact = shell.classList.contains('compact');
+  shell.classList.add('measuring');
+  shell.classList.remove('compact');
+  const hOpen = pager.clientHeight;
+  shell.classList.add('compact');
+  const hCompact = pager.clientHeight;
+  shell.classList.toggle('compact', wasCompact);
+  void shell.offsetHeight;                 // force le recalcul avant de réactiver les transitions
+  shell.classList.remove('measuring');
+  COMPACT_GAIN = Math.max(0, hCompact - hOpen);
+}
+
+function updateCompact(){
+  // panneau Résultat ouvert : on reste en format compact
+  if(resultSheet.classList.contains('open')){ shell.classList.add('compact'); return; }
+  const el = pageEls[currentPage()];
+  if(!el) return;
+  const y = el.scrollTop;
+  const isCompact = shell.classList.contains('compact');
+
+  if(!isCompact){
+    // Ne se replier que si la page a assez de matière pour rester défilée une fois repliée.
+    // Sinon le défilement retomberait à 0, annulant le repli : c'est ce qui provoquait le rebond.
+    const overflow = el.scrollHeight - el.clientHeight;
+    // après repli il doit rester assez de course pour que le défilement
+    // ne retombe pas sous le seuil de sortie (sinon : rebond)
+    if(y > COMPACT_ON && overflow > COMPACT_GAIN + COMPACT_OFF + 20) shell.classList.add('compact');
+  } else {
+    if(y < COMPACT_OFF) shell.classList.remove('compact');
+  }
+}
+let compactRaf = null;
+pageEls.forEach(el=>{
+  el.addEventListener('scroll', ()=>{
+    if(compactRaf) return;
+    compactRaf = requestAnimationFrame(()=>{ updateCompact(); compactRaf = null; });
+  }, {passive:true});
+});
+
+let dotRaf = null;
+pager.addEventListener('scroll', ()=>{
+  if(dotRaf) return;
+  dotRaf = requestAnimationFrame(()=>{ syncDots(); updateCompact(); dotRaf = null; });
+}, {passive:true});
+
+/* --- navigation clavier (ordinateur) --- */
+document.addEventListener('keydown', e=>{
+  if(e.target.matches('input, textarea')) return;
+  if(e.key === 'ArrowRight') goToPage(currentPage()+1);
+  if(e.key === 'ArrowLeft')  goToPage(currentPage()-1);
+});
+
+/* --- réalignement au redimensionnement (scrollend absent sur Safari) --- */
+let lastW = pager.clientWidth;
+let pageAtResize = 0;
+setInterval(()=>{ if(pager.clientWidth === lastW) pageAtResize = currentPage(); }, 400);
+window.addEventListener('resize', ()=>{
+  if(pager.clientWidth !== lastW){
+    pager.scrollLeft = pageAtResize * pager.clientWidth;
+    lastW = pager.clientWidth;
+    layoutUsualBands();
+    syncDots();
+  }
+});
+
+/* ---------- init ---------- */
+let initialTheme = 'dark';
+try{ initialTheme = localStorage.getItem(THEME_KEY) || 'dark'; }catch(e){}
+setTheme(initialTheme);
+
+const saved = loadState();
+if(saved) applyState(saved);
+else { applyModeUI(); applyLockUI(); }
 compute();
-renderList();
+layoutUsualBands();
+syncDots();
+measureChrome();
+requestAnimationFrame(()=>{ measureChrome(); measureCompactGain(); });
 </script>
 
 </body>
