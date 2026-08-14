@@ -457,24 +457,19 @@ html[data-theme="light"] .page-nav{ background:var(--bg); }
 .phone-shell.compact .hero-sub{ margin-top:6px; }
 .phone-shell.compact .hero::before, .phone-shell.compact .hero::after{ opacity:.5; }
 
-/* ---- barre Objectif dans la zone fixe ---- */
-.objectif-bar{
-  margin:10px 20px 2px; padding:11px 16px 12px;
-  background:var(--surface); border:1px solid var(--stroke); border-radius:16px;
-  transition:padding .28s ease, margin .28s ease;
+/* ---- masquage du hero + alerte au défilement vers le bas ---- */
+.hero, .alert-box.show{
+  transition:max-height .28s cubic-bezier(.4,0,.2,1), opacity .18s ease,
+             margin .28s ease, padding .28s cubic-bezier(.4,0,.2,1),
+             background .35s ease, box-shadow .35s ease;
+  max-height:340px;
 }
-.objectif-bar .slider-top{ margin-bottom:6px; }
-.objectif-bar .row-label{ font-size:13px; }
-.objectif-bar .track-wrap{ padding:6px 0 2px; }
-.phone-shell.compact .objectif-bar{ padding:7px 16px 8px; margin:8px 20px 2px; }
-
-/* masqué en mode Rendement (le rendement y est le résultat, pas une consigne) */
-.objectif-bar.hidden-bar{
+.phone-shell.hero-hidden .hero,
+.phone-shell.hero-hidden .alert-box.show{
   max-height:0; opacity:0; padding-top:0; padding-bottom:0;
   margin-top:0; margin-bottom:0; border-width:0; overflow:hidden;
   pointer-events:none;
 }
-.objectif-bar{ max-height:120px; overflow:hidden; }
 
 /* ============ PAGE RÉSULTAT DISTINCTE ============ */
 .page-result{
@@ -719,17 +714,6 @@ html.theme-anim, html.theme-anim *{
 
   <div class="alert-box" id="alertBox"><span class="alert-icon">⚠</span><span id="alertText"></span></div>
 
-  <div class="objectif-bar" id="objectifBar">
-    <div class="slider-top">
-      <span class="row-label" id="cibleLabel">Rendement annuel cible
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Rendement annualisé sur fonds propres que tu vises (TRI simplifié). C'est lui qui pilote tout le calcul.</span></span>
-      </span>
-      <span class="slider-val" id="val_cible">12.0%</span>
-    </div>
-    <div class="track-wrap"><span class="usual-band" data-for="sl_cible" data-umin="12" data-umax="20"></span><input type="range" id="sl_cible" min="4" max="30" step="0.5" value="12"></div>
-  </div>
-
-
   <div class="pager" id="pager">
     <section class="page" data-page="0">
 
@@ -739,6 +723,15 @@ html.theme-anim, html.theme-anim *{
     <span class="section-title-right"><span class="hint">CHF</span><button class="lock-btn" id="lockMontants" title="Verrouiller les montants">🔓</button></span>
   </div>
   <div class="card" id="cardMontants">
+    <div class="slider-row" id="objectifBar">
+      <div class="slider-top">
+        <span class="row-label" id="cibleLabel">Rendement annuel cible
+          <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Rendement annualisé sur fonds propres que tu vises (TRI simplifié). C'est lui qui pilote tout le calcul.</span></span>
+        </span>
+        <span class="slider-val" id="val_cible">12.0%</span>
+      </div>
+      <div class="track-wrap"><span class="usual-band" data-for="sl_cible" data-umin="12" data-umax="20"></span><input type="range" id="sl_cible" min="4" max="30" step="0.5" value="12"></div>
+    </div>
     <div class="row">
       <div class="row-text"><div class="row-label">Terrain
         <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Prix d'achat du terrain, avant les frais d'acquisition (notaire, droits de mutation, RF).</span></span>
@@ -1149,9 +1142,6 @@ function applyModeUI(){
   document.querySelectorAll('.mode-toggle button').forEach(b=>
     b.classList.toggle('active', b.dataset.mode === mode));
 
-  // en mode Rendement, le rendement est le résultat : pas de cible à saisir
-  $('objectifBar').classList.toggle('hidden-bar', mode === 'surface');
-
   // la surface se saisit dans les modes 'surface' et 'terrain'
   $('row_surface').classList.toggle('hidden', mode === 'objectif');
   // en mode terrain, le prix du terrain est le résultat, pas une saisie
@@ -1162,7 +1152,9 @@ function applyModeUI(){
     mode === 'objectif' ? 'Surface à construire' :
     mode === 'surface'  ? 'Rendement obtenu'     : 'Prix max du terrain';
 
-  $('cibleLabel').firstChild.textContent = 'Rendement annuel cible ';
+  // en mode Rendement, la cible n'entre pas dans le calcul : elle reste un repère
+  $('cibleLabel').firstChild.textContent =
+    mode === 'surface' ? 'Rendement annuel cible (repère) ' : 'Rendement annuel cible ';
 
   // la zone fixe change de hauteur selon le mode : on remesure le gain du repli
   if(typeof measureCompactGain === 'function') requestAnimationFrame(measureCompactGain);
@@ -1850,6 +1842,7 @@ function compute(){
     $('verifSurf').textContent = '— m²';
     updateGauge(S, surfaceMax);
     $('alertBox').classList.remove('show');
+    syncAlertHeight();
     clearPeekNumbers();
     renderWaterfall({ccons:0,cterr:0,taxe:0,inter:0,comm:0,impot:0,rn:0});
     renderDiagnostic({rann:NaN}, {marge:NaN, poids:NaN, partFP:NaN, ccM2:raw.cc, pv:raw.pv});
@@ -1891,6 +1884,7 @@ function compute(){
   } else {
     $('alertBox').classList.remove('show');
   }
+  syncAlertHeight();
 
   updateGauge(S, surfaceMax);
   $('verifSurf').textContent = fmtInt(S) + ' m²';
@@ -1925,7 +1919,7 @@ function measureChrome(){
   if(nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
   if(peek) document.documentElement.style.setProperty('--peek-h', peek.offsetHeight + 'px');
 }
-window.addEventListener('resize', ()=>{ measureChrome(); measureCompactGain(); });
+window.addEventListener('resize', ()=>{ measureChrome(); measureCompactGain(); measureHeroGain(); });
 
 
 /* ================= PANNEAU RÉSULTAT COULISSANT ================= */
@@ -2178,18 +2172,84 @@ function updateCompact(){
     if(y < COMPACT_OFF) shell.classList.remove('compact');
   }
 }
+/* --- masquage du hero + alerte selon le SENS du défilement ---
+   vers le bas : on efface le résultat et l'alerte pour dégager la page,
+   vers le haut (ou retour en tête) : ils reviennent. */
+const HERO_MIN   = 56;   // il faut avoir défilé un peu avant d'effacer
+const HERO_DELTA = 6;    // gestes plus courts ignorés : pas de clignotement
+let HERO_GAIN = 0;       // hauteur que la page regagne une fois le hero effacé
+let heroLockUntil = 0;   // pendant la transition, le scrollTop bouge tout seul
+const heroLastY = new WeakMap();
+
+function measureHeroGain(){
+  const wasHidden = shell.classList.contains('hero-hidden');
+  shell.classList.add('measuring');
+  shell.classList.remove('hero-hidden');
+  const hShown = pager.clientHeight;
+  shell.classList.add('hero-hidden');
+  const hHidden = pager.clientHeight;
+  shell.classList.toggle('hero-hidden', wasHidden);
+  void shell.offsetHeight;                 // recalcul avant de réactiver les transitions
+  shell.classList.remove('measuring');
+  HERO_GAIN = Math.max(0, hHidden - hShown);
+}
+
+/* L'alerte fait partie de ce qu'on efface : quand elle apparaît ou disparaît,
+   la hauteur regagnée change, donc on la remesure. */
+let alertWasShown = null;
+function syncAlertHeight(){
+  const on = $('alertBox').classList.contains('show');
+  if(on === alertWasShown) return;
+  alertWasShown = on;
+  measureHeroGain();
+}
+
+function setHeroHidden(on){
+  if(shell.classList.contains('hero-hidden') === on) return;
+  shell.classList.toggle('hero-hidden', on);
+  // la page grandit/rétrécit : le navigateur ré-ajuste scrollTop pendant l'animation.
+  // On gèle la détection de sens le temps que ça se stabilise.
+  heroLockUntil = performance.now() + 420;
+}
+
+function updateHeroHide(){
+  const el = pageEls[currentPage()];
+  if(!el) return;
+  const y = el.scrollTop;
+
+  // panneau Résultat ouvert : il recouvre déjà le hero, on ne touche à rien
+  if(resultSheet.classList.contains('open')){ heroLastY.set(el, y); return; }
+
+  if(y <= HERO_DELTA){ heroLastY.set(el, y); setHeroHidden(false); return; }
+  if(performance.now() < heroLockUntil){ heroLastY.set(el, y); return; }
+
+  const prev = heroLastY.has(el) ? heroLastY.get(el) : 0;
+  const d = y - prev;
+  if(Math.abs(d) < HERO_DELTA) return;     // on garde le repère : les petits pas s'additionnent
+  heroLastY.set(el, y);
+
+  if(d > 0){
+    // n'effacer que si la page reste défilée après coup, sinon elle remonte
+    // toute seule en tête et le hero réapparaît aussitôt (rebond)
+    const overflow = el.scrollHeight - el.clientHeight;
+    if(y > HERO_MIN && overflow > HERO_GAIN + 40) setHeroHidden(true);
+  } else {
+    setHeroHidden(false);
+  }
+}
+
 let compactRaf = null;
 pageEls.forEach(el=>{
   el.addEventListener('scroll', ()=>{
     if(compactRaf) return;
-    compactRaf = requestAnimationFrame(()=>{ updateCompact(); compactRaf = null; });
+    compactRaf = requestAnimationFrame(()=>{ updateCompact(); updateHeroHide(); compactRaf = null; });
   }, {passive:true});
 });
 
 let dotRaf = null;
 pager.addEventListener('scroll', ()=>{
   if(dotRaf) return;
-  dotRaf = requestAnimationFrame(()=>{ syncDots(); updateCompact(); dotRaf = null; });
+  dotRaf = requestAnimationFrame(()=>{ syncDots(); updateCompact(); updateHeroHide(); dotRaf = null; });
 }, {passive:true});
 
 /* --- navigation clavier (ordinateur) --- */
@@ -2224,7 +2284,7 @@ compute();
 layoutUsualBands();
 syncDots();
 measureChrome();
-requestAnimationFrame(()=>{ measureChrome(); measureCompactGain(); });
+requestAnimationFrame(()=>{ measureChrome(); measureCompactGain(); measureHeroGain(); });
 </script>
 
 </body>
