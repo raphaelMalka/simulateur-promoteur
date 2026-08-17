@@ -1,24 +1,21 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="dark" data-mode="objectif">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Surface — Simulateur promoteur</title>
+<title>Simulateur de promotion — Genève</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap');
 
-/* Les dégradés CSS ne s'animent pas entre deux valeurs par défaut.
-   En déclarant les variables comme de vraies couleurs, le navigateur peut
-   les interpoler — la transition de teinte devient continue. */
-@property --accent-a { syntax:'<color>'; inherits:true; initial-value:#8A5AF6; }
-@property --accent-b { syntax:'<color>'; inherits:true; initial-value:#4D70FF; }
-@property --accent-halo { syntax:'<color>'; inherits:true; initial-value:rgba(138,90,246,0.20); }
-@property --accent-glow { syntax:'<color>'; inherits:true; initial-value:rgba(77,112,255,0.60); }
-
-html{
-  transition: --accent-a .40s ease, --accent-b .40s ease,
-              --accent-halo .40s ease, --accent-glow .40s ease;
-}
+/* ==========================================================================
+   [CSS-1] JETONS
+   Les variables d'accent sont déclarées comme couleurs animables afin que les
+   dégradés puissent être interpolés lors d'un changement de mode.
+   ========================================================================== */
+@property --acc-a    { syntax:'<color>'; inherits:true; initial-value:#8A5AF6; }
+@property --acc-b    { syntax:'<color>'; inherits:true; initial-value:#4D70FF; }
+@property --acc-halo { syntax:'<color>'; inherits:true; initial-value:rgba(138,90,246,.20); }
+@property --acc-glow { syntax:'<color>'; inherits:true; initial-value:rgba(77,112,255,.60); }
 
 :root{
   --bg:#0B0B0F;
@@ -28,23 +25,20 @@ html{
   --text:#F5F6F8;
   --text-dim:#8B8D96;
   --text-faint:#5B5D66;
-  --accent-a:#8B5CF6;
-  --accent-b:#4C6FFF;
-  --mint:#3FD3A3;
-  --coral:#F4736C;
-  --amber:#E9A63E;
-  /* segments de la cascade : famille violette de l'app, du plus lourd au plus léger */
+
+  --good:#3FD3A3;
+  --warn:#E9A63E;
+  --bad:#F4736C;
+
   --wf-1:#6D5BF8; --wf-2:#9B5CF6; --wf-3:#C39BFB;
   --wf-4:#7C86F0; --wf-5:#5E7CE8; --wf-6:#4B5473; --wf-7:#3FD3A3;
-  --peek-h: 92px;
-  --accent-glow: rgba(76,111,255,0.6);
-  --accent-halo: rgba(139,92,246,0.20);
-  --gradient: linear-gradient(135deg, var(--accent-a) 0%, var(--accent-b) 100%);
-  --gradient-warn: linear-gradient(135deg, #3A3C46 0%, #24252C 100%);
-  --radius-l:28px;
-  --radius-m:18px;
-  --radius-s:12px;
-  --bubble-shadow:0 12px 30px rgba(0,0,0,0.45);
+
+  --grad:linear-gradient(135deg, var(--acc-a) 0%, var(--acc-b) 100%);
+  --r-l:28px; --r-m:18px; --r-s:12px;
+  --shadow-pop:0 12px 30px rgba(0,0,0,.45);
+  --nav-h:0px;
+  --peek-h:92px;
+  --mono:'JetBrains Mono',ui-monospace,monospace;
 }
 
 html[data-theme="light"]{
@@ -55,329 +49,79 @@ html[data-theme="light"]{
   --text:#14151A;
   --text-dim:#6B6D78;
   --text-faint:#9A9CA6;
-  --bubble-shadow:0 12px 30px rgba(20,21,26,0.18);
-  /* sur fond blanc, les teintes vives deviennent illisibles : versions assombries */
-  --mint:#0E9D6E;
-  --coral:#D4504A;
-  --amber:#B0741A;
+
+  --good:#0E9D6E;
+  --warn:#B0741A;
+  --bad:#D4504A;
+
   --wf-1:#5B4AE0; --wf-2:#8A47E0; --wf-3:#B183E8;
   --wf-4:#6673D8; --wf-5:#4F6AD0; --wf-6:#5A6480; --wf-7:#0E9D6E;
+
+  --shadow-pop:0 12px 30px rgba(20,21,26,.18);
 }
 
-*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
-html,body{margin:0;padding:0;height:100%;}
+/* palettes par mode : même axe violet, 18° d'écart entre modes */
+html[data-mode="objectif"]{ --acc-a:#8A5AF6; --acc-b:#4D70FF; --acc-glow:rgba(77,112,255,.60); --acc-halo:rgba(138,90,246,.20); }
+html[data-mode="terrain"] { --acc-a:#B75FF2; --acc-b:#6B5BFB; --acc-glow:rgba(107,91,251,.58); --acc-halo:rgba(183,95,242,.20); }
+html[data-mode="surface"] { --acc-a:#DE65EC; --acc-b:#995AF6; --acc-glow:rgba(153,90,246,.58); --acc-halo:rgba(222,101,236,.19); }
+
+html{ transition:--acc-a .4s ease, --acc-b .4s ease, --acc-halo .4s ease, --acc-glow .4s ease; }
+
+/* fondu du changement de thème : actif uniquement pendant la bascule */
+html.theming, html.theming *{
+  transition-property:background-color,color,border-color,box-shadow;
+  transition-duration:.25s; transition-timing-function:ease;
+}
+
+/* ==========================================================================
+   [CSS-2] BASE
+   ========================================================================== */
+*{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html,body{ margin:0; padding:0; height:100%; }
 body{
-  background:#000;
+  background:#000; color:var(--text);
   font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
-  color:var(--text);
-  min-height:100%;
-  display:flex;
-  align-items:flex-start;
-  justify-content:center;
+  display:flex; align-items:flex-start; justify-content:center;
 }
+button{ font-family:inherit; }
 
-.phone-frame{
-  width:100%;
-  max-width:430px;
-  height:100vh;
-  height:100dvh;
+/* ==========================================================================
+   [CSS-3] STRUCTURE
+   frame = cadre fixe (référence de positionnement des surfaces flottantes)
+   shell = colonne : entête figée / pages défilantes / navigation
+   ========================================================================== */
+.frame{
   position:relative;
+  width:100%; max-width:430px;
+  height:100vh; height:100dvh;
 }
-
-.phone-shell{
-  width:100%;
-  height:100%;
-  background:
-    radial-gradient(120% 60% at 50% -10%, var(--accent-halo) 0%, transparent 60%),
-    var(--bg);
-  position:relative;
-  overflow-y:auto;
-  overflow-x:hidden;
-  padding-bottom:40px;
-  transition:background .25s ease;
-}
-
 @media (min-width:480px){
   body{ padding:32px 16px; }
-  .phone-frame{
-    border-radius:44px;
-    overflow:hidden;
-    box-shadow:0 0 0 8px #0a0a0c, 0 0 0 9px #2a2c34, 0 40px 90px -20px rgba(0,0,0,0.7);
+  .frame{
+    border-radius:44px; overflow:hidden;
+    box-shadow:0 0 0 8px #0a0a0c, 0 0 0 9px #2a2c34, 0 40px 90px -20px rgba(0,0,0,.7);
   }
 }
 
-/* status bar */
-.statusbar{ display:flex; justify-content:space-between; align-items:center; padding:16px 26px 4px; font-size:14px; font-weight:600; color:var(--text); }
-
-/* header */
-.header-row{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; padding:26px 22px 6px; }
-.eyebrow{ font-size:12px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:0.08em; }
-.title{ font-size:26px; font-weight:800; letter-spacing:-0.02em; margin:4px 0 0; }
-.header-actions{ display:flex; gap:8px; margin-top:2px; flex-shrink:0; }
-.icon-btn{
-  width:36px; height:36px; border-radius:12px;
-  background:var(--surface); border:1px solid var(--stroke);
-  display:flex; align-items:center; justify-content:center;
-  color:var(--text-dim); cursor:pointer; font-size:16px;
-  transition:background .15s ease;
-}
-.icon-btn:active{ background:var(--surface-2); }
-.icon-btn .icon-moon{ display:none; }
-html[data-theme="light"] .icon-btn .icon-sun{ display:none; }
-html[data-theme="light"] .icon-btn .icon-moon{ display:inline; }
-
-/* mode toggle */
-.mode-toggle{ position:relative; margin:16px 20px 0; display:flex; gap:0; background:var(--surface); border:1px solid var(--stroke); border-radius:16px; padding:4px; }
-.mode-thumb{
-  position:absolute; top:4px; bottom:4px; left:4px;
-  width:calc((100% - 8px)/3);
-  border-radius:12px;
-  background:var(--gradient);
-  box-shadow:0 8px 18px -8px var(--accent-glow);
-  transition:transform .32s cubic-bezier(.4,0,.2,1), background .32s ease, box-shadow .32s ease;
-  z-index:0;
-}
-.mode-toggle button{ position:relative; z-index:1; flex:1; border:none; background:transparent; color:var(--text-dim); font-family:inherit; font-size:12.5px; font-weight:700; padding:11px 2px; border-radius:12px; cursor:pointer; transition:color .25s ease; line-height:1.25; white-space:nowrap; }
-.mode-toggle button.active{ color:#fff; }
-
-/* palettes par mode — même axe violet, décalage de teinte de 18° entre modes */
-html[data-mode="objectif"]{
-  --accent-a:#8A5AF6; --accent-b:#4D70FF; --accent-glow:rgba(77,112,255,0.60); --accent-halo:rgba(138,90,246,0.20);
-}
-html[data-mode="surface"]{
-  --accent-a:#B75FF2; --accent-b:#6B5BFB; --accent-glow:rgba(107,91,251,0.58); --accent-halo:rgba(183,95,242,0.20);
-}
-html[data-mode="terrain"]{
-  --accent-a:#DE65EC; --accent-b:#995AF6; --accent-glow:rgba(153,90,246,0.58); --accent-halo:rgba(222,101,236,0.19);
-}
-
-/* hero */
-.hero{ margin:14px 20px 8px; border-radius:var(--radius-l); padding:26px 24px 24px; background:var(--gradient); position:sticky; top:10px; z-index:55; overflow:hidden; box-shadow:0 20px 40px -18px var(--accent-glow); transition:background .35s ease, box-shadow .35s ease; }
-.hero.warn{ background:var(--gradient-warn); box-shadow:0 20px 40px -18px rgba(0,0,0,0.5); }
-.hero::after{ content:""; position:absolute; right:-40px; top:-60px; width:180px; height:180px; border-radius:50%; background:rgba(255,255,255,0.10); }
-.hero::before{ content:""; position:absolute; left:-30px; bottom:-50px; width:130px; height:130px; border-radius:50%; background:rgba(255,255,255,0.08); }
-.hero-label{ font-size:13px; font-weight:600; color:rgba(255,255,255,0.85); text-transform:uppercase; letter-spacing:0.06em; }
-.hero-value{ font-size:52px; font-weight:800; letter-spacing:-0.03em; color:#fff; margin:6px 0 2px; line-height:1; display:flex; align-items:baseline; gap:8px; font-family:'JetBrains Mono',monospace; }
-.hero-value .unit{ font-size:20px; font-weight:700; opacity:0.85; font-family:'Inter',sans-serif;}
-.hero-sub{ font-size:13.5px; color:rgba(255,255,255,0.85); font-weight:500; margin-top:10px; }
-.hero-badge{ display:inline-flex; align-items:center; gap:5px; background:rgba(0,0,0,0.18); padding:5px 10px; border-radius:20px; font-size:12.5px; font-weight:700; color:#fff; }
-.hero-badge.warn{ background:rgba(0,0,0,0.28); }
-.hero-badge .pip{width:6px;height:6px;border-radius:50%;background:var(--mint);}
-.hero-badge.warn .pip{background:var(--coral);}
-
-.section-title{ padding:22px 22px 10px; font-size:15px; font-weight:700; color:var(--text); display:flex; justify-content:space-between; align-items:center; gap:10px; }
-.section-title .hint{ font-size:12px; font-weight:500; color:var(--text-faint); white-space:nowrap; }
-.section-title-right{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
-
-.card{ margin:0 20px; background:var(--surface); border:1px solid var(--stroke); border-radius:var(--radius-m); overflow:visible; transition:opacity .2s ease; }
-.row{ padding:15px 18px; display:flex; align-items:center; justify-content:space-between; gap:14px; border-bottom:1px solid var(--stroke); }
-.row:first-child{ border-radius:var(--radius-m) var(--radius-m) 0 0; }
-.row:last-child{ border-bottom:none; border-radius:0 0 var(--radius-m) var(--radius-m); }
-.row.hidden{ display:none; }
-.row-text{ flex:1; min-width:0; }
-.row-label{ font-size:14.5px; font-weight:600; color:var(--text); display:flex; align-items:center; transition:color .2s ease; }
-.row-note{ font-size:11.5px; color:var(--text-faint); margin-top:2px; }
-
-.field{ display:flex; align-items:center; gap:2px; background:var(--surface-2); border:1px solid var(--stroke); border-radius:12px; padding:8px 12px; min-width:128px; }
-.field input{ width:100%; background:transparent; border:none; outline:none; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:600; text-align:right; transition:color .2s ease; }
-.field input:disabled{ color:var(--text-faint); cursor:not-allowed; }
-.field .suffix{ font-size:12px; color:var(--text-dim); font-weight:600; white-space:nowrap;}
-
-.lock-btn{ width:28px; height:28px; border-radius:9px; background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:12px; flex-shrink:0; }
-.lock-btn:active{ background:var(--stroke); }
-
-.locked-pill{ display:flex; align-items:center; gap:7px; background:var(--surface-2); border:1px solid var(--stroke); border-radius:12px; padding:8px 12px; font-family:'JetBrains Mono',monospace; font-weight:600; font-size:14px; color:var(--text-dim); min-width:70px; justify-content:center; }
-
-.alert-box{
-  display:none; margin:10px 20px 0; padding:12px 14px;
-  background:rgba(255,176,32,0.12); border:1px solid rgba(255,176,32,0.35);
-  border-radius:14px; font-size:12.5px; line-height:1.45; color:var(--amber);
-  align-items:flex-start; gap:9px; font-weight:500;
-}
-.alert-box.show{ display:flex; }
-.alert-icon{ flex-shrink:0; font-size:13px; }
-
-.surface-control{ display:flex; align-items:center; gap:8px; }
-.max-btn{
-  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim);
-  font-family:inherit; font-weight:700; font-size:11.5px; padding:8px 11px;
-  border-radius:10px; cursor:pointer; flex-shrink:0;
-}
-.max-btn:active{ background:var(--stroke); }
-
-/* locked card state: gray everything out */
-.card.locked .row-label,
-.card.locked .slider-val,
-.card.locked .row-note{ color:var(--text-faint) !important; }
-.card.locked input[type=range]{ opacity:.45; cursor:not-allowed; }
-.card.locked input[type=range]::-webkit-slider-thumb{ box-shadow:0 2px 8px rgba(0,0,0,0.3), 0 0 0 5px rgba(139,141,150,0.25); }
-.card.locked .field{ opacity:.55; }
-
-.slider-row{ padding:14px 18px 16px; border-bottom:1px solid var(--stroke);}
-.slider-row:first-child{ border-radius:var(--radius-m) var(--radius-m) 0 0; }
-.slider-row:last-child{border-bottom:none; border-radius:0 0 var(--radius-m) var(--radius-m);}
-.slider-top{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; margin-bottom:10px;}
-.slider-top .row-label{ flex:1; min-width:0; }
-.slider-val{ font-family:'JetBrains Mono',monospace; font-weight:700; font-size:14.5px; color:var(--mint); flex-shrink:0; white-space:nowrap; padding-top:1px;}
-input[type=range]{ -webkit-appearance:none; appearance:none; width:100%; height:4px; border-radius:4px; background:var(--stroke); outline:none; }
-input[type=range]::-webkit-slider-thumb{ -webkit-appearance:none; width:20px; height:20px; border-radius:50%; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.4), 0 0 0 5px var(--accent-halo); cursor:pointer; margin-top:-8px; }
-input[type=range]::-moz-range-thumb{ width:20px; height:20px; border-radius:50%; border:none; background:#fff; box-shadow:0 2px 8px rgba(0,0,0,0.4), 0 0 0 5px var(--accent-halo); cursor:pointer; }
-
-.breakdown-row{ padding:13px 18px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid var(--stroke); font-size:14px; }
-.breakdown-row:first-child{ border-radius:var(--radius-m) var(--radius-m) 0 0; }
-.breakdown-row:last-child{border-bottom:none; border-radius:0 0 var(--radius-m) var(--radius-m);}
-.breakdown-row .k{ color:var(--text-dim); font-weight:500; display:flex; align-items:center; }
-.breakdown-row .v{ font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--text);}
-.breakdown-row.total .k, .breakdown-row.total .v{ color:var(--text); font-weight:700; }
-.breakdown-row .v.pos{ color:var(--mint); }
-.breakdown-row .v.neg{ color:var(--coral); }
-
-.chip-toggle{ margin:14px 20px 0; display:flex; background:var(--surface); border:1px solid var(--stroke); border-radius:14px; padding:4px; }
-.chip-toggle button{ flex:1; border:none; background:transparent; color:var(--text-dim); font-family:inherit; font-size:13.5px; font-weight:700; padding:10px 0; border-radius:10px; cursor:pointer; transition:all .18s ease; }
-.chip-toggle button.active{ background:var(--surface-2); color:var(--text); box-shadow:inset 0 0 0 1px var(--stroke); }
-
-.tabpane{ display:none; }
-.tabpane.active{ display:block; }
-
-.footnote{ margin:22px 22px 4px; font-size:11.5px; line-height:1.6; color:var(--text-faint); }
-.footnote b{ color:var(--text-dim); }
-.save-note{ margin:10px 22px 0; font-size:11px; color:var(--text-faint); display:flex; align-items:center; gap:6px; justify-content:center; }
-.save-note .dot{ width:5px; height:5px; border-radius:50%; background:var(--mint); }
-
-.reset-bar{ margin:20px 20px 0; display:flex; justify-content:center; }
-.reset-btn{ background:var(--surface); border:1px solid var(--stroke); color:var(--text-dim); font-family:inherit; font-weight:600; font-size:13px; padding:11px 22px; border-radius:14px; cursor:pointer; }
-.reset-btn:active{ background:var(--surface-2); }
-
-.final-save-bar{ margin:26px 20px 0; }
-.final-save-btn{
-  width:100%; background:var(--gradient); color:#fff; border:none;
-  border-radius:16px; padding:16px; font-family:inherit; font-weight:700; font-size:15px;
-  cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px;
-  box-shadow:0 14px 30px -12px var(--accent-glow); transition:background .35s ease, box-shadow .35s ease;
-}
-.final-save-btn:active{ transform:scale(0.98); }
-
-/* tooltip */
-.tip{ position:relative; display:inline-flex; margin-left:6px; }
-.tip .icon{
-  width:15px; height:15px; border-radius:50%;
-  background:var(--surface-2); border:1px solid var(--stroke);
-  color:var(--text-faint); font-size:10px; font-weight:700;
-  display:flex; align-items:center; justify-content:center;
-  cursor:help; line-height:1; user-select:none;
-}
-.tip .bubble{
-  position:absolute; left:0; bottom:calc(100% + 8px);
-  width:208px; max-width:60vw;
-  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text);
-  font-size:11.5px; line-height:1.45; font-weight:500;
-  padding:10px 12px; border-radius:10px;
-  box-shadow:var(--bubble-shadow);
-  opacity:0; transform:translateY(4px);
-  pointer-events:none; transition:opacity .15s ease, transform .15s ease;
-  z-index:80; text-transform:none;
-}
-.tip:hover .bubble, .tip:focus .bubble, .tip:focus-within .bubble{ opacity:1; transform:translateY(0); pointer-events:auto; }
-
-/* history sheet */
-.sheet-backdrop{ position:absolute; inset:0; background:rgba(0,0,0,0.55); opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:90; }
-.sheet-backdrop.open{ opacity:1; pointer-events:auto; }
-.sheet{
-  position:absolute; left:0; right:0; bottom:0;
-  background:var(--surface); border-top:1px solid var(--stroke);
-  border-radius:24px 24px 0 0; max-height:72%;
+.shell{
+  position:relative;
+  height:100%;
   display:flex; flex-direction:column; overflow:hidden;
-  transform:translateY(100%); transition:transform .25s ease;
-  z-index:91; box-shadow:0 -20px 50px rgba(0,0,0,0.4);
+  background:radial-gradient(120% 60% at 50% -10%, var(--acc-halo) 0%, transparent 60%), var(--bg);
+  transition:background .25s ease;
 }
-.sheet.open{ transform:translateY(0); }
-.sheet-handle{ width:36px; height:4px; border-radius:4px; background:var(--stroke); margin:10px auto 2px; flex-shrink:0; }
-.sheet-header{ display:flex; justify-content:space-between; align-items:center; padding:10px 20px 12px; flex-shrink:0; }
-.sheet-title{ font-size:16px; font-weight:700; }
-.sheet-close{ width:30px; height:30px; border-radius:10px; background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim); display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:14px; }
-.sheet-save-btn{ margin:0 20px 16px; background:var(--gradient); color:#fff; border:none; border-radius:14px; padding:13px; font-weight:700; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; flex-shrink:0; }
-.sheet-list{ overflow-y:auto; flex:1; min-height:0; padding:0 12px 24px; }
-.hist-item{ display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 10px; border-bottom:1px solid var(--stroke); cursor:pointer; }
-.hist-item:last-child{ border-bottom:none; }
-.hist-main{ flex:1; min-width:0; }
-.hist-label{ font-size:14px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.hist-date{ font-size:11.5px; color:var(--text-faint); margin-top:2px; }
-.hist-del{ width:30px; height:30px; border-radius:10px; display:flex; align-items:center; justify-content:center; color:var(--text-faint); background:transparent; border:none; cursor:pointer; flex-shrink:0; }
-.hist-del:active{ background:var(--surface-2); }
-.hist-empty{ padding:34px 20px; text-align:center; color:var(--text-faint); font-size:13px; }
 
-/* name project modal */
-.modal-backdrop{
-  position:absolute; inset:0; background:rgba(0,0,0,0.6);
-  display:flex; align-items:center; justify-content:center; padding:24px;
-  opacity:0; pointer-events:none; transition:opacity .2s ease; z-index:100;
-}
-.modal-backdrop.open{ opacity:1; pointer-events:auto; }
-.modal-box{
-  width:100%; max-width:320px; background:var(--surface); border:1px solid var(--stroke);
-  border-radius:20px; padding:20px; box-shadow:0 24px 60px rgba(0,0,0,0.5);
-  transform:scale(0.94) translateY(6px); transition:transform .2s ease;
-}
-.modal-backdrop.open .modal-box{ transform:scale(1) translateY(0); }
-.modal-title{ font-size:16px; font-weight:700; color:var(--text); margin-bottom:14px; }
-.modal-input{
-  width:100%; background:var(--surface-2); border:1px solid var(--stroke); border-radius:12px;
-  padding:12px 14px; font-family:inherit; font-size:14.5px; font-weight:600; color:var(--text);
-  outline:none; box-sizing:border-box;
-}
-.modal-input:focus{ border-color:var(--accent-b); }
-.modal-actions{ display:flex; gap:10px; margin-top:16px; }
-.modal-btn{ flex:1; border:none; border-radius:12px; padding:12px; font-family:inherit; font-weight:700; font-size:13.5px; cursor:pointer; }
-.modal-btn.ghost{ background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim); }
-.modal-btn.ghost:active{ background:var(--stroke); }
-.modal-btn.primary{ background:var(--gradient); color:#fff; }
-.modal-btn.primary:active{ transform:scale(0.98); }
+.top{ flex-shrink:0; }
 
-/* --- bloc Résultat mis en avant --- */
-.result-card{ border-color:var(--accent-b); box-shadow:0 0 0 1px var(--accent-b), 0 12px 30px -18px var(--accent-glow); }
-.result-main{ display:flex; gap:0; border-bottom:1px solid var(--stroke); }
-.result-block{ flex:1; padding:16px 18px; }
-.result-block + .result-block{ border-left:1px solid var(--stroke); }
-.result-label{ font-size:11.5px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; }
-.result-value{ font-family:'JetBrains Mono',monospace; font-size:19px; font-weight:700; color:var(--text); margin-top:6px; letter-spacing:-0.02em; }
-.result-value.accent{ color:var(--mint); }
-
-/* sous-totaux dans les listes */
-.breakdown-row.subtotal{ background:var(--surface-2); }
-.breakdown-row.subtotal .k, .breakdown-row.subtotal .v{ color:var(--text); font-weight:700; }
-
-/* --- jauge surface / max constructible --- */
-.gauge-row{ padding-top:12px; padding-bottom:15px; }
-.gauge-wrap{ width:100%; }
-.gauge-head{ display:flex; justify-content:space-between; align-items:baseline; margin-bottom:8px; gap:10px; }
-.gauge-label{ font-size:12px; font-weight:600; color:var(--text-dim); }
-.gauge-pct{ font-family:'JetBrains Mono',monospace; font-size:12px; font-weight:700; color:var(--text-dim); flex-shrink:0; }
-.gauge-track{ height:6px; border-radius:6px; background:var(--surface-2); border:1px solid var(--stroke); overflow:hidden; }
-.gauge-fill{ height:100%; width:0%; border-radius:6px; background:var(--gradient); transition:width .35s cubic-bezier(.4,0,.2,1), background .35s ease; }
-.gauge-fill.over{ background:linear-gradient(135deg,#FF6B6B,#FFB020); }
-
-/* --- repère de valeurs usuelles sur les curseurs --- */
-.track-wrap{ position:relative; display:block; padding:8px 0; }
-.usual-band{
-  position:absolute; top:50%; transform:translateY(-50%);
-  height:8px; border-radius:3px;
-  background:var(--text-faint); opacity:.28;
-  pointer-events:none; z-index:0;
-}
-.track-wrap input[type=range]{ position:relative; z-index:1; }
-.card.locked .usual-band{ opacity:.15; }
-
-/* ================= PAGER ================= */
-.phone-shell{ display:flex; flex-direction:column; overflow:hidden !important; padding-bottom:0 !important; }
+.pager-wrap{ position:relative; flex:1; min-height:0; display:flex; }
 
 .pager{
   flex:1; min-height:0;
   display:flex;
   overflow-x:auto; overflow-y:hidden;
-  scroll-snap-type:x mandatory;
-  scroll-behavior:smooth;
-  -webkit-overflow-scrolling:touch;
-  scrollbar-width:none;
+  scroll-snap-type:x mandatory; scroll-behavior:smooth;
+  -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  padding-bottom:calc(var(--peek-h) + 6px);
 }
 .pager::-webkit-scrollbar{ display:none; }
 
@@ -390,1277 +134,732 @@ input[type=range]::-moz-range-thumb{ width:20px; height:20px; border-radius:50%;
 }
 .page::-webkit-scrollbar{ display:none; }
 
-/* le hero ne défile plus : il est dans la zone fixe au-dessus du pager */
-.hero{ position:relative !important; top:auto !important; }
-
-/* dans la première carte d'une page, les bulles s'ouvrent vers le bas
-   pour ne pas être rognées par le bord haut de la page */
-.page .card:first-of-type .tip .bubble{
-  bottom:auto; top:calc(100% + 8px); transform:translateY(-4px);
-}
-.page .card:first-of-type .tip:hover .bubble,
-.page .card:first-of-type .tip:focus-within .bubble{ transform:translateY(0); }
-
-/* ---- navigation par points ---- */
-.page-nav{
-  position:relative; z-index:78;
-  flex-shrink:0;
-  display:flex; align-items:center; justify-content:space-between;
-  gap:2px; padding:8px 12px calc(10px + env(safe-area-inset-bottom));
-  background:var(--bg);
-  border-top:1px solid var(--stroke);
-}
-html[data-theme="light"] .page-nav{ background:var(--bg); }
-
-.page-dot{
-  flex:1; display:flex; flex-direction:column; align-items:center; gap:5px;
-  background:transparent; border:none; cursor:pointer; padding:4px 2px;
-  font-family:inherit;
-}
-.dot-pip{
-  width:6px; height:6px; border-radius:50%;
-  background:var(--text-faint); opacity:.45;
-  transition:all .25s ease;
-}
-.dot-label{
-  font-size:9.5px; font-weight:600; color:var(--text-faint);
-  white-space:nowrap; transition:color .25s ease; letter-spacing:-0.01em;
-}
-.page-dot.active .dot-pip{ background:var(--accent-b); opacity:1; width:18px; border-radius:3px; }
-.page-dot.active .dot-label{ color:var(--text); }
-
-/* les blocs de bas de page reprennent leur marge dans le nouveau flux */
-.footnote{ margin-bottom:8px; }
-
-/* ============ ZONE FIXE COMPACTABLE ============ */
-.header-row{
-  overflow:hidden;
+/* ==========================================================================
+   [CSS-4] ENTÊTE
+   ========================================================================== */
+.head{
+  display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+  padding:26px 22px 6px;
+  max-height:120px; opacity:1; overflow:hidden;
   transition:max-height .28s cubic-bezier(.4,0,.2,1), opacity .2s ease,
              padding-top .28s ease, padding-bottom .28s ease;
-  max-height:110px; opacity:1;
 }
-.phone-shell.compact .header-row{
-  max-height:0; opacity:0; padding-top:0; padding-bottom:0;
+.shell.compact .head{ max-height:0; opacity:0; padding-top:0; padding-bottom:0; }
+
+.head-title{ font-size:26px; font-weight:800; letter-spacing:-.02em; margin:4px 0 0; }
+.head-acts{ display:flex; gap:8px; margin-top:2px; flex-shrink:0; }
+
+.project-name{
+  display:block; width:100%;
+  background:none; border:none; outline:none; padding:2px 0 3px;
+  font:600 12px/1.2 inherit; color:var(--text-dim);
+  text-transform:uppercase; letter-spacing:.08em;
+  border-bottom:1px dashed transparent;
+  transition:color .2s ease, border-color .2s ease;
 }
+.project-name::placeholder{ color:var(--text-faint); text-transform:uppercase; }
+.project-name:hover{ border-bottom-color:var(--stroke); }
+.project-name:focus{ color:var(--text); border-bottom-color:var(--acc-b); text-transform:none; letter-spacing:0; }
 
-.mode-toggle{ transition:margin .28s ease; }
-.phone-shell.compact .mode-toggle{ margin-top:10px; }
+.icon-btn{
+  width:36px; height:36px; border-radius:12px;
+  background:var(--surface); border:1px solid var(--stroke); color:var(--text-dim);
+  display:flex; align-items:center; justify-content:center;
+  font-size:16px; cursor:pointer; transition:background .15s ease;
+}
+.icon-btn:active{ background:var(--surface-2); }
+.icon-moon{ display:none; }
+html[data-theme="light"] .icon-sun{ display:none; }
+html[data-theme="light"] .icon-moon{ display:inline; }
 
-/* hero rétréci */
-.hero{ transition:padding .28s cubic-bezier(.4,0,.2,1), margin .28s ease, background .35s ease, box-shadow .35s ease; }
-.hero-value{ transition:font-size .28s cubic-bezier(.4,0,.2,1); }
-.hero-label, .hero-sub{ transition:max-height .28s ease, opacity .2s ease, margin .28s ease; overflow:hidden; max-height:40px; opacity:1; }
+/* ==========================================================================
+   [CSS-5] SÉLECTEUR DE MODE
+   ========================================================================== */
+.modes{
+  position:relative; margin:16px 20px 0; padding:4px;
+  display:flex;
+  background:var(--surface); border:1px solid var(--stroke); border-radius:16px;
+  transition:margin .28s ease;
+}
+.shell.compact .modes{ margin-top:10px; }
+.modes-thumb{
+  position:absolute; top:4px; bottom:4px; left:4px;
+  width:calc((100% - 8px)/3); border-radius:12px;
+  background:var(--grad); box-shadow:0 8px 18px -8px var(--acc-glow);
+  transition:transform .32s cubic-bezier(.4,0,.2,1), background .32s ease, box-shadow .32s ease;
+  z-index:0;
+}
+.modes button{
+  position:relative; z-index:1; flex:1;
+  border:none; background:none; color:var(--text-dim);
+  font-size:12.5px; font-weight:700; padding:11px 2px;
+  border-radius:12px; cursor:pointer; white-space:nowrap;
+  transition:color .25s ease;
+}
+.modes button.on{ color:#fff; }
 
-.phone-shell.compact .hero{ padding:14px 20px 15px; margin:10px 20px 4px; }
-.phone-shell.compact .hero-value{ font-size:34px; }
-.phone-shell.compact .hero-label{ max-height:0; opacity:0; margin:0; }
-.phone-shell.compact .hero-sub{ margin-top:6px; }
-.phone-shell.compact .hero::before, .phone-shell.compact .hero::after{ opacity:.5; }
-
-/* ---- masquage du hero + alerte au défilement vers le bas ---- */
-.hero, .alert-box.show{
-  transition:max-height .28s cubic-bezier(.4,0,.2,1), opacity .18s ease,
-             margin .28s ease, padding .28s cubic-bezier(.4,0,.2,1),
+/* ==========================================================================
+   [CSS-6] RECTANGLE DE RÉSULTAT
+   ========================================================================== */
+.hero{
+  position:relative; overflow:hidden;
+  margin:14px 20px 8px; padding:26px 24px 24px;
+  border-radius:var(--r-l);
+  background:var(--grad);
+  box-shadow:0 20px 40px -18px var(--acc-glow);
+  transition:padding .28s cubic-bezier(.4,0,.2,1), margin .28s ease,
              background .35s ease, box-shadow .35s ease;
-  max-height:340px;
 }
-.phone-shell.hero-hidden .hero,
-.phone-shell.hero-hidden .alert-box.show{
-  max-height:0; opacity:0; padding-top:0; padding-bottom:0;
-  margin-top:0; margin-bottom:0; border-width:0; overflow:hidden;
-  pointer-events:none;
+.hero.mute{ background:linear-gradient(135deg,#3A3C46,#24252C); box-shadow:0 20px 40px -18px rgba(0,0,0,.5); }
+.hero::after{ content:""; position:absolute; right:-40px; top:-60px; width:180px; height:180px; border-radius:50%; background:rgba(255,255,255,.10); }
+.hero::before{ content:""; position:absolute; left:-30px; bottom:-50px; width:130px; height:130px; border-radius:50%; background:rgba(255,255,255,.08); }
+
+.hero-label{
+  font-size:13px; font-weight:600; color:rgba(255,255,255,.85);
+  text-transform:uppercase; letter-spacing:.06em;
+  max-height:40px; opacity:1; overflow:hidden;
+  transition:max-height .28s ease, opacity .2s ease, margin .28s ease;
+}
+.hero-val{
+  display:flex; align-items:baseline; gap:8px;
+  margin:6px 0 2px; line-height:1;
+  font-family:var(--mono); font-size:52px; font-weight:800; letter-spacing:-.03em; color:#fff;
+  transition:font-size .28s cubic-bezier(.4,0,.2,1);
+}
+.hero-val .unit{ font-family:'Inter',sans-serif; font-size:20px; font-weight:700; opacity:.85; }
+.hero-sub{ margin-top:10px; transition:margin .28s ease; }
+.hero-badge{
+  display:inline-flex; align-items:center; gap:5px;
+  padding:5px 10px; border-radius:20px;
+  background:rgba(0,0,0,.18); color:#fff; font-size:12.5px; font-weight:700;
+}
+.hero-badge .pip{ width:6px; height:6px; border-radius:50%; background:var(--good); }
+.hero-badge.mute{ background:rgba(0,0,0,.28); }
+.hero-badge.mute .pip{ background:var(--bad); }
+
+.shell.compact .hero{ padding:14px 20px 15px; margin:10px 20px 4px; }
+.shell.compact .hero-val{ font-size:34px; }
+.shell.compact .hero-label{ max-height:0; opacity:0; margin:0; }
+.shell.compact .hero-sub{ margin-top:6px; }
+
+/* ==========================================================================
+   [CSS-7] ROULEAUX DE CHIFFRES
+   ========================================================================== */
+.roll{ display:inline-flex; align-items:flex-start; }
+.roll-cell{ display:inline-block; overflow:hidden; height:1em; line-height:1em; }
+.roll-strip{ display:block; will-change:transform; }
+.roll-digit{ display:block; height:1em; line-height:1em; text-align:center; }
+.roll-sep{ display:inline-block; height:1em; line-height:1em; white-space:pre; }
+
+/* ==========================================================================
+   [CSS-9] SECTIONS ET CARTES
+   ========================================================================== */
+.sec{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:22px 22px 10px; font-size:15px; font-weight:700; color:var(--text);
+}
+.sec-right{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.sec-hint{ font-size:12px; font-weight:500; color:var(--text-faint); white-space:nowrap; }
+
+.card{
+  margin:0 20px; overflow:visible;
+  background:var(--surface); border:1px solid var(--stroke); border-radius:var(--r-m);
+  transition:opacity .2s ease, background-color .25s ease, border-color .25s ease;
+}
+.card.locked .f-label, .card.locked .f-val, .card.locked .f-note{ color:var(--text-faint) !important; }
+.card.locked input[type=range]{ opacity:.45; cursor:not-allowed; }
+.card.locked .f-box{ opacity:.55; }
+.card.locked .band{ opacity:.15; }
+
+.lock-btn{
+  width:28px; height:28px; border-radius:9px; flex-shrink:0;
+  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim);
+  display:flex; align-items:center; justify-content:center;
+  font-size:12px; cursor:pointer;
+}
+.lock-btn:active{ background:var(--stroke); }
+
+/* ==========================================================================
+   [CSS-10] CHAMPS
+   ========================================================================== */
+.f{ padding:15px 18px; border-bottom:1px solid var(--stroke); }
+.f:last-child{ border-bottom:none; }
+.f.hide{ display:none; }
+.f-row{ display:flex; align-items:center; justify-content:space-between; gap:14px; }
+.f-text{ flex:1; min-width:0; }
+.f-label{ display:flex; align-items:center; font-size:14.5px; font-weight:600; color:var(--text); transition:color .2s ease; }
+.f-note{ margin-top:2px; font-size:11.5px; color:var(--text-faint); }
+
+.f-box{
+  display:flex; align-items:center; gap:2px; min-width:128px;
+  padding:8px 12px; border-radius:12px;
+  background:var(--surface-2); border:1px solid var(--stroke);
+  transition:border-color .18s ease, box-shadow .18s ease;
+}
+.f-box.scrub{ cursor:ew-resize; }
+.f-box.scrubbing{ border-color:var(--acc-b); box-shadow:0 0 0 2px var(--acc-halo); }
+.f-box input{
+  width:100%; background:none; border:none; outline:none; text-align:right;
+  font-family:var(--mono); font-size:14px; font-weight:600; color:var(--text);
+}
+.f-box input:disabled{ color:var(--text-faint); cursor:not-allowed; }
+.f-suffix{ font-size:12px; font-weight:600; color:var(--text-dim); white-space:nowrap; }
+
+.pill{
+  display:flex; align-items:center; justify-content:center; min-width:70px;
+  padding:8px 12px; border-radius:12px;
+  background:var(--surface-2); border:1px solid var(--stroke);
+  font-family:var(--mono); font-size:14px; font-weight:600; color:var(--text-dim);
 }
 
-/* ============ PAGE RÉSULTAT DISTINCTE ============ */
-.page-result{
-  background:
-    radial-gradient(120% 45% at 50% 0%, var(--accent-halo) 0%, transparent 70%);
+.max-btn{
+  flex-shrink:0; padding:8px 11px; border-radius:10px;
+  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim);
+  font-size:11.5px; font-weight:700; cursor:pointer;
 }
-.page-result::before{
-  content:""; display:block; height:2px; margin:0 20px 4px;
-  border-radius:2px; background:var(--gradient); opacity:.8;
-}
-.page-dot.is-result .dot-pip{ box-shadow:0 0 0 2px var(--accent-halo); }
-.page-dot.is-result.active .dot-pip{ box-shadow:0 0 10px var(--accent-glow); }
+.max-btn:active{ background:var(--stroke); }
 
-/* ---- bloc repliable des limites ---- */
+/* curseurs */
+.f-slider{ padding:14px 18px 16px; }
+.f-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:10px; }
+.f-top .f-label{ flex:1; min-width:0; }
+.f-val{ flex-shrink:0; padding-top:1px; font-family:var(--mono); font-size:14.5px; font-weight:700; color:var(--good); white-space:nowrap; }
+
+.track{ position:relative; display:block; padding:8px 0; }
+.band{
+  position:absolute; top:50%; transform:translateY(-50%);
+  height:8px; border-radius:3px;
+  background:var(--text-faint); opacity:.28; pointer-events:none; z-index:0;
+}
+input[type=range]{
+  position:relative; z-index:1;
+  -webkit-appearance:none; appearance:none;
+  width:100%; height:4px; border-radius:4px;
+  background:var(--stroke); outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
+  margin-top:-8px; background:#fff; cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.4), 0 0 0 5px var(--acc-halo);
+}
+input[type=range]::-moz-range-thumb{
+  width:20px; height:20px; border-radius:50%; border:none;
+  background:#fff; cursor:pointer;
+  box-shadow:0 2px 8px rgba(0,0,0,.4), 0 0 0 5px var(--acc-halo);
+}
+
+/* jauge de surface */
+.gauge-head{ display:flex; align-items:baseline; justify-content:space-between; gap:10px; margin-bottom:8px; }
+.gauge-label{ font-size:12px; font-weight:600; color:var(--text-dim); }
+.gauge-pct{ flex-shrink:0; font-family:var(--mono); font-size:12px; font-weight:700; color:var(--text-dim); }
+.gauge-track{ height:6px; border-radius:6px; overflow:hidden; background:var(--surface-2); border:1px solid var(--stroke); }
+.gauge-fill{
+  height:100%; width:0%; border-radius:6px; background:var(--grad);
+  transition:width .35s cubic-bezier(.4,0,.2,1), background .35s ease;
+}
+.gauge-fill.over{ background:linear-gradient(135deg,var(--bad),var(--warn)); }
+
+/* ==========================================================================
+   [CSS-11] INFOBULLES
+   ========================================================================== */
+.tip{ position:relative; display:inline-flex; margin-left:6px; }
+.tip-ico{
+  width:15px; height:15px; border-radius:50%;
+  background:var(--surface-2); border:1px solid var(--stroke);
+  color:var(--text-faint); font-size:10px; font-weight:700; line-height:1;
+  display:flex; align-items:center; justify-content:center;
+  cursor:help; user-select:none;
+}
+.tip-bubble{
+  position:absolute; left:0; bottom:calc(100% + 8px);
+  width:208px; max-width:60vw; z-index:80;
+  padding:10px 12px; border-radius:10px;
+  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text);
+  font-size:11.5px; line-height:1.45; font-weight:500; text-transform:none; letter-spacing:0;
+  box-shadow:var(--shadow-pop);
+  opacity:0; transform:translateY(4px); pointer-events:none;
+  transition:opacity .15s ease, transform .15s ease;
+}
+.tip:hover .tip-bubble, .tip:focus-within .tip-bubble{ opacity:1; transform:translateY(0); pointer-events:auto; }
+/* première carte d'une zone défilante : ouverture vers le bas pour ne pas être rognée */
+.page .card:first-of-type .tip-bubble,
+.sheet-body .card:first-of-type .tip-bubble{ bottom:auto; top:calc(100% + 8px); transform:translateY(-4px); }
+.page .card:first-of-type .tip:hover .tip-bubble,
+.page .card:first-of-type .tip:focus-within .tip-bubble,
+.sheet-body .card:first-of-type .tip:hover .tip-bubble,
+.sheet-body .card:first-of-type .tip:focus-within .tip-bubble{ transform:translateY(0); }
+
+/* ==========================================================================
+   [CSS-12] INDICES DE PAGE
+   Le bas de l'écran est occupé par la barre du navigateur sur mobile :
+   la navigation se fait au balayage, les chevrons ne font que le suggérer.
+   ========================================================================== */
+.turn{
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:26px; height:52px; z-index:60;
+  display:flex; align-items:center; justify-content:center;
+  background:none; border:none; cursor:pointer;
+  color:var(--text-dim); font-size:22px; font-weight:300; line-height:1;
+  opacity:.45; transition:opacity .25s ease, transform .25s ease;
+  animation:nudge 2.6s ease-in-out infinite;
+}
+.turn.left{ left:2px; }
+.turn.right{ right:2px; }
+.turn:hover{ opacity:.9; }
+.turn.off{ opacity:0; pointer-events:none; animation:none; }
+
+@keyframes nudge{
+  0%,88%,100%{ transform:translateY(-50%) translateX(0); }
+  93%{ transform:translateY(-50%) translateX(var(--nudge,3px)); }
+}
+.turn.left{ --nudge:-3px; }
+.turn.right{ --nudge:3px; }
+@media (prefers-reduced-motion:reduce){ .turn{ animation:none; } }
+
+/* ==========================================================================
+   [CSS-13] PANNEAU RÉSULTAT
+   ========================================================================== */
+.sheet{
+  position:absolute; left:0; right:0; bottom:var(--nav-h); z-index:70;
+  height:calc(82% - var(--nav-h));
+  display:flex; flex-direction:column;
+  background:var(--surface); border-top:1px solid var(--stroke);
+  border-radius:22px 22px 0 0;
+  box-shadow:0 -18px 45px rgba(0,0,0,.38);
+  transform:translateY(calc(100% - var(--peek-h)));
+  transition:transform .34s cubic-bezier(.32,.72,0,1);
+  touch-action:none;
+}
+.sheet.open{ transform:translateY(0); }
+.sheet.drag{ transition:none; }
+
+.sheet-peek{ flex-shrink:0; padding:8px 20px calc(12px + env(safe-area-inset-bottom)); cursor:grab; user-select:none; }
+.sheet-peek:active{ cursor:grabbing; }
+.sheet-grip{ width:38px; height:4px; border-radius:4px; background:var(--stroke); margin:0 auto 10px; }
+.peek-row{ display:flex; align-items:center; gap:18px; }
+.peek-item{ display:flex; flex-direction:column; gap:2px; min-width:0; }
+.peek-label{ font-size:10px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.05em; }
+.peek-val{ font-family:var(--mono); font-size:15px; font-weight:700; color:var(--text); white-space:nowrap; }
+.peek-val.accent{ color:var(--good); }
+.peek-chev{ margin-left:auto; color:var(--text-faint); font-size:16px; transition:transform .34s ease; }
+.sheet.open .peek-chev{ transform:rotate(180deg); }
+
+.sheet-body{ flex:1; min-height:0; overflow-y:auto; padding-bottom:26px; touch-action:pan-y; scrollbar-width:none; }
+.sheet-body::-webkit-scrollbar{ display:none; }
+
+/* ==========================================================================
+   [CSS-14] CASCADE
+   ========================================================================== */
+.wf{ padding:16px 18px 14px; }
+.wf-bar{ display:flex; width:100%; height:26px; border-radius:8px; overflow:hidden; background:var(--surface-2); }
+.wf-seg{ height:100%; transition:width .35s cubic-bezier(.4,0,.2,1), background-color .3s ease; }
+.wf-legend{ display:flex; flex-wrap:wrap; gap:7px 14px; margin-top:14px; }
+.wf-item{ display:flex; align-items:center; gap:7px; font-size:11.5px; }
+.wf-chip{ width:9px; height:9px; border-radius:3px; flex-shrink:0; }
+.wf-name{ color:var(--text-dim); font-weight:500; }
+.wf-pct{ font-family:var(--mono); font-weight:600; color:var(--text); }
+
+/* ==========================================================================
+   [CSS-15] DIAGNOSTIC
+   ========================================================================== */
+.dg{ padding:14px 18px 15px; border-bottom:1px solid var(--stroke); }
+.dg:last-child{ border-bottom:none; }
+.dg-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; }
+.dg-name{ font-size:13.5px; font-weight:600; color:var(--text); }
+.dg-val{ font-family:var(--mono); font-size:14px; font-weight:700; white-space:nowrap; }
+.dg-track{ position:relative; height:6px; margin:11px 0 9px; border-radius:6px; background:var(--surface-2); border:1px solid var(--stroke); }
+.dg-band{ position:absolute; top:0; bottom:0; border-radius:4px; background:var(--acc-b); opacity:.30; }
+.dg-mark{
+  position:absolute; top:50%; width:11px; height:11px; border-radius:50%;
+  transform:translate(-50%,-50%);
+  background:var(--text); border:2px solid var(--surface);
+  box-shadow:0 1px 5px rgba(0,0,0,.45);
+  transition:left .35s cubic-bezier(.4,0,.2,1), background-color .25s ease;
+}
+.dg-foot{ display:flex; align-items:flex-start; gap:8px; }
+.dg-tag{
+  flex-shrink:0; padding:3px 7px; border-radius:6px;
+  font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.03em;
+}
+.dg-note{ font-size:11px; line-height:1.45; color:var(--text-faint); }
+
+.is-good{ color:var(--good); }
+.is-warn{ color:var(--warn); }
+.is-bad { color:var(--bad); }
+.is-none{ color:var(--text-faint); }
+.bg-good{ background:color-mix(in srgb, var(--good) 16%, transparent); color:var(--good); }
+.bg-warn{ background:color-mix(in srgb, var(--warn) 16%, transparent); color:var(--warn); }
+.bg-bad { background:color-mix(in srgb, var(--bad)  16%, transparent); color:var(--bad); }
+.bg-none{ background:var(--surface-2); color:var(--text-faint); }
+.mk-good{ background:var(--good); }
+.mk-warn{ background:var(--warn); }
+.mk-bad { background:var(--bad); }
+
+/* ==========================================================================
+   [CSS-16] BILAN
+   ========================================================================== */
+.res-card{ border-color:var(--acc-b); box-shadow:0 0 0 1px var(--acc-b), 0 12px 30px -18px var(--acc-glow); }
+.res-main{ display:flex; border-bottom:1px solid var(--stroke); }
+.res-block{ flex:1; padding:16px 18px; }
+.res-block + .res-block{ border-left:1px solid var(--stroke); }
+.res-label{ font-size:11.5px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; }
+.res-value{ margin-top:6px; font-family:var(--mono); font-size:19px; font-weight:700; color:var(--text); letter-spacing:-.02em; }
+.res-value.accent{ color:var(--good); }
+
+.line{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:13px 18px; border-bottom:1px solid var(--stroke); font-size:14px;
+}
+.line:last-child{ border-bottom:none; }
+.line-k{ display:flex; align-items:center; color:var(--text-dim); font-weight:500; }
+.line-v{ font-family:var(--mono); font-weight:600; color:var(--text); }
+.line.total{ background:var(--surface-2); }
+.line.total .line-k, .line.total .line-v{ color:var(--text); font-weight:700; }
+.line-v.neg{ color:var(--bad); }
+.line-v.pos{ color:var(--good); }
+
+/* ==========================================================================
+   [CSS-17] ACTIONS DE BAS DE PANNEAU
+   ========================================================================== */
+.actions{ margin:26px 20px 0; }
+.btn-primary{
+  width:100%; padding:16px; border:none; border-radius:16px;
+  background:var(--grad); color:#fff; font-size:15px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  box-shadow:0 14px 30px -12px var(--acc-glow);
+  transition:background .35s ease, box-shadow .35s ease, transform .1s ease;
+}
+.btn-primary:active{ transform:scale(.98); }
+.btn-ghost{
+  margin:20px auto 0; display:block;
+  padding:11px 22px; border-radius:14px;
+  background:var(--surface); border:1px solid var(--stroke); color:var(--text-dim);
+  font-size:13px; font-weight:600; cursor:pointer;
+}
+.btn-ghost:active{ background:var(--surface-2); }
+.autosave{
+  margin:10px 22px 0; display:flex; align-items:center; justify-content:center; gap:6px;
+  font-size:11px; color:var(--text-faint);
+}
+.autosave .pip{ width:5px; height:5px; border-radius:50%; background:var(--good); }
+.footnote{ margin:22px 22px 8px; font-size:11.5px; line-height:1.6; color:var(--text-faint); }
+.footnote b{ color:var(--text-dim); }
+
 .limits{ margin:20px 20px 0; }
 .limits summary{
-  cursor:pointer; list-style:none;
+  list-style:none; cursor:pointer;
+  display:flex; align-items:center; gap:8px;
+  padding:12px 14px; border-radius:14px;
+  background:var(--surface); border:1px solid var(--stroke);
   font-size:12.5px; font-weight:600; color:var(--text-dim);
-  padding:12px 14px; background:var(--surface); border:1px solid var(--stroke);
-  border-radius:14px; display:flex; align-items:center; gap:8px;
 }
 .limits summary::-webkit-details-marker{ display:none; }
 .limits summary::before{ content:"▸"; font-size:10px; transition:transform .2s ease; }
 .limits[open] summary::before{ transform:rotate(90deg); }
 .limits[open] summary{ border-radius:14px 14px 0 0; border-bottom:none; }
 .limits .card{ margin:0; border-radius:0 0 14px 14px; }
-.limits .card .row:first-child{ border-radius:0; }
-
-/* ================= PANNEAU RÉSULTAT COULISSANT ================= */
-.result-sheet{
-  position:absolute; left:0; right:0; bottom:var(--nav-h, 52px);
-  z-index:70;
-  background:var(--surface);
-  border-top:1px solid var(--stroke);
-  border-radius:22px 22px 0 0;
-  box-shadow:0 -18px 45px rgba(0,0,0,0.38);
-  display:flex; flex-direction:column;
-  height:calc(82% - var(--nav-h, 52px));
-  transform:translateY(calc(100% - var(--peek-h, 92px)));
-  transition:transform .34s cubic-bezier(.32,.72,0,1);
-  touch-action:none;
+.note-head{
+  font-size:11px; font-weight:700; color:var(--text-dim);
+  text-transform:uppercase; letter-spacing:.06em;
+  background:var(--surface-2);
 }
-.result-sheet.open{ transform:translateY(0); }
-.result-sheet.dragging{ transition:none; }
+.note-strong{ color:var(--text-dim) !important; }
+.note-strong b{ color:var(--text); font-weight:700; }
 
-.rs-peek{ flex-shrink:0; padding:8px 20px 12px; cursor:grab; user-select:none; }
-.rs-peek:active{ cursor:grabbing; }
-.rs-grip{ width:38px; height:4px; border-radius:4px; background:var(--stroke); margin:0 auto 10px; }
-.rs-peek-row{ display:flex; align-items:center; gap:18px; }
-.rs-peek-item{ display:flex; flex-direction:column; gap:2px; min-width:0; }
-.rs-peek-label{ font-size:10px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.05em; }
-.rs-peek-value{ font-family:'JetBrains Mono',monospace; font-size:15px; font-weight:700; color:var(--text); white-space:nowrap; }
-.rs-peek-value.accent{ color:var(--mint); }
-.rs-chevron{ margin-left:auto; color:var(--text-faint); font-size:16px; transition:transform .34s ease; }
-.result-sheet.open .rs-chevron{ transform:rotate(180deg); }
+/* ==========================================================================
+   [CSS-18] SURFACES FLOTTANTES : historique, comparaison, modale
+   ========================================================================== */
+.scrim{
+  position:absolute; inset:0; z-index:90;
+  background:rgba(0,0,0,.55);
+  opacity:0; pointer-events:none; transition:opacity .2s ease;
+}
+.scrim.open{ opacity:1; pointer-events:auto; }
 
-.rs-body{ flex:1; min-height:0; overflow-y:auto; padding-bottom:26px; touch-action:pan-y; scrollbar-width:none; }
-.rs-body::-webkit-scrollbar{ display:none; }
-.rs-body .card:first-of-type .tip .bubble{ bottom:auto; top:calc(100% + 8px); transform:translateY(-4px); }
-
-/* le pager laisse la place au panneau replié */
-.pager{ padding-bottom:calc(var(--peek-h, 92px) + 6px); }
-
-/* ================= CASCADE CA -> NET ================= */
-.wf-card{ padding:16px 18px 14px; }
-.wf-bar{ display:flex; width:100%; height:26px; border-radius:8px; overflow:hidden; background:var(--surface-2); }
-.wf-seg{ height:100%; transition:width .35s cubic-bezier(.4,0,.2,1); }
-.wf-legend{ display:flex; flex-wrap:wrap; gap:8px 16px; margin-top:14px; }
-.wf-item{ display:flex; align-items:center; gap:7px; font-size:12px; }
-.wf-chip{ width:9px; height:9px; border-radius:3px; flex-shrink:0; }
-.wf-name{ color:var(--text-dim); font-weight:500; }
-.wf-val{ font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--text); }
-
-
-
-/* ================= COMPARAISON ================= */
-.sheet-head-actions{ display:flex; align-items:center; gap:8px; }
-.cmp-btn{
+.drawer{
+  position:absolute; left:0; right:0; bottom:0; z-index:91;
+  max-height:72%; display:flex; flex-direction:column; overflow:hidden;
+  background:var(--surface); border-top:1px solid var(--stroke);
+  border-radius:24px 24px 0 0;
+  box-shadow:0 -20px 50px rgba(0,0,0,.4);
+  transform:translateY(100%); transition:transform .25s ease;
+}
+.drawer.open{ transform:translateY(0); }
+.drawer-grip{ width:36px; height:4px; border-radius:4px; background:var(--stroke); margin:10px auto 2px; flex-shrink:0; }
+.drawer-head{ display:flex; align-items:center; justify-content:space-between; padding:10px 20px 12px; flex-shrink:0; }
+.drawer-title{ font-size:16px; font-weight:700; }
+.drawer-acts{ display:flex; align-items:center; gap:8px; }
+.x-btn{
+  width:30px; height:30px; border-radius:10px;
   background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim);
-  font-family:inherit; font-size:12px; font-weight:700; padding:7px 13px; border-radius:10px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; font-size:14px; cursor:pointer;
 }
-.cmp-btn:not(:disabled){ background:var(--gradient); color:#fff; border-color:transparent; }
+.cmp-btn{
+  padding:7px 13px; border-radius:10px;
+  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim);
+  font-size:12px; font-weight:700; cursor:pointer;
+}
+.cmp-btn:not(:disabled){ background:var(--grad); color:#fff; border-color:transparent; }
 .cmp-btn:disabled{ opacity:.5; cursor:not-allowed; }
-.cmp-hint{ padding:0 20px 10px; font-size:11.5px; color:var(--text-faint); }
+.drawer-hint{ padding:0 20px 10px; font-size:11.5px; color:var(--text-faint); }
+.drawer-list{ flex:1; min-height:0; overflow-y:auto; padding:0 12px 24px; }
 
+.hist{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:12px 10px; border-bottom:1px solid var(--stroke); cursor:pointer;
+}
+.hist:last-child{ border-bottom:none; }
+.hist-main{ flex:1; min-width:0; }
+.hist-label{ font-size:14px; font-weight:600; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.hist-date{ margin-top:2px; font-size:11.5px; color:var(--text-faint); }
 .hist-check{
   width:20px; height:20px; border-radius:6px; flex-shrink:0;
-  border:1.5px solid var(--stroke); background:var(--surface-2);
-  display:flex; align-items:center; justify-content:center;
-  font-size:11px; color:transparent; cursor:pointer;
+  border:1.5px solid var(--stroke); background:var(--surface-2); color:transparent;
+  display:flex; align-items:center; justify-content:center; font-size:11px; cursor:pointer;
 }
-.hist-check.on{ background:var(--gradient); border-color:transparent; color:#fff; }
+.hist-check.on{ background:var(--grad); border-color:transparent; color:#fff; }
+.hist-del{
+  width:30px; height:30px; border-radius:10px; flex-shrink:0;
+  background:none; border:none; color:var(--text-faint);
+  display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.hist-del:active{ background:var(--surface-2); }
+.empty{ padding:34px 20px; text-align:center; font-size:13px; color:var(--text-faint); }
 
-.cmp-overlay{
+.overlay{
   position:absolute; inset:0; z-index:120;
-  background:var(--bg);
-  display:flex; flex-direction:column;
+  display:flex; flex-direction:column; background:var(--bg);
   opacity:0; pointer-events:none; transform:translateY(12px);
   transition:opacity .22s ease, transform .22s ease;
 }
-.cmp-overlay.open{ opacity:1; pointer-events:auto; transform:translateY(0); }
-.cmp-header{ display:flex; justify-content:space-between; align-items:center; padding:20px 20px 14px; flex-shrink:0; }
-.cmp-scroll{ flex:1; overflow:auto; padding:0 16px 26px; }
-.cmp-table{ width:100%; border-collapse:collapse; font-size:12.5px; }
-.cmp-table th, .cmp-table td{ padding:10px 8px; text-align:right; border-bottom:1px solid var(--stroke); white-space:nowrap; }
-.cmp-table th:first-child, .cmp-table td:first-child{ text-align:left; color:var(--text-dim); font-weight:500; position:sticky; left:0; background:var(--bg); }
-.cmp-table thead th{ color:var(--text); font-weight:700; font-size:12px; border-bottom:1.5px solid var(--stroke); }
-.cmp-table td{ font-family:'JetBrains Mono',monospace; font-weight:600; color:var(--text); }
-.cmp-table tr.head-row td{ font-weight:700; }
-.cmp-best{ color:var(--mint) !important; }
-.cmp-worst{ color:var(--coral) !important; }
+.overlay.open{ opacity:1; pointer-events:auto; transform:translateY(0); }
+.overlay-head{ display:flex; align-items:center; justify-content:space-between; padding:20px 20px 14px; flex-shrink:0; }
+.overlay-body{ flex:1; overflow:auto; padding:0 16px 26px; }
 
-/* ================= GLISSER POUR MODIFIER ================= */
-.field.scrubbable{ cursor:ew-resize; }
-.field.scrubbing{ border-color:var(--accent-b); box-shadow:0 0 0 2px var(--accent-halo); }
-.scrub-hint{ font-size:9.5px; color:var(--text-faint); opacity:.7; }
-/* fige les animations le temps de mesurer la hauteur repliée */
-.phone-shell.measuring, .phone-shell.measuring *{ transition:none !important; animation:none !important; }
+.cmp{ width:100%; border-collapse:collapse; font-size:12.5px; }
+.cmp th, .cmp td{ padding:10px 8px; text-align:right; border-bottom:1px solid var(--stroke); white-space:nowrap; }
+.cmp th:first-child, .cmp td:first-child{ position:sticky; left:0; text-align:left; background:var(--bg); color:var(--text-dim); font-weight:500; }
+.cmp thead th{ color:var(--text); font-weight:700; font-size:12px; border-bottom:1.5px solid var(--stroke); }
+.cmp td{ font-family:var(--mono); font-weight:600; color:var(--text); }
 
-/* ================= DIAGNOSTIC ================= */
-.diag-row{ padding:14px 18px 15px; border-bottom:1px solid var(--stroke); }
-.diag-row:last-child{ border-bottom:none; }
-.diag-head{ display:flex; justify-content:space-between; align-items:baseline; gap:12px; }
-.diag-name{ font-size:13.5px; font-weight:600; color:var(--text); }
-.diag-val{ font-family:'JetBrains Mono',monospace; font-size:14px; font-weight:700; white-space:nowrap; }
-.diag-val.good{ color:var(--mint); }
-.diag-val.ok{ color:var(--amber); }
-.diag-val.warn{ color:var(--coral); }
-.diag-val.na{ color:var(--text-faint); }
-
-.diag-track{
-  position:relative; height:6px; margin:11px 0 9px;
-  background:var(--surface-2); border:1px solid var(--stroke);
-  border-radius:6px;
+.modal{
+  position:absolute; inset:0; z-index:130;
+  display:flex; align-items:center; justify-content:center; padding:24px;
+  background:rgba(0,0,0,.6);
+  opacity:0; pointer-events:none; transition:opacity .2s ease;
 }
-.diag-band{
-  position:absolute; top:0; bottom:0;
-  background:var(--accent-b); opacity:.30; border-radius:4px;
+.modal.open{ opacity:1; pointer-events:auto; }
+.modal-box{
+  width:100%; max-width:320px; padding:20px; border-radius:20px;
+  background:var(--surface); border:1px solid var(--stroke);
+  box-shadow:0 24px 60px rgba(0,0,0,.5);
+  transform:scale(.94) translateY(6px); transition:transform .2s ease;
 }
-.diag-mark{
-  position:absolute; top:50%; width:11px; height:11px; border-radius:50%;
-  transform:translate(-50%,-50%);
-  background:var(--text); border:2px solid var(--surface);
-  box-shadow:0 1px 5px rgba(0,0,0,.45);
-  transition:left .35s cubic-bezier(.4,0,.2,1), background .25s ease;
+.modal.open .modal-box{ transform:scale(1) translateY(0); }
+.modal-title{ margin-bottom:14px; font-size:16px; font-weight:700; color:var(--text); }
+.modal-input{
+  width:100%; padding:12px 14px; border-radius:12px;
+  background:var(--surface-2); border:1px solid var(--stroke); color:var(--text);
+  font-family:inherit; font-size:14.5px; font-weight:600; outline:none;
 }
-.diag-mark.good{ background:var(--mint); }
-.diag-mark.ok{ background:var(--amber); }
-.diag-mark.warn{ background:var(--coral); }
+.modal-input:focus{ border-color:var(--acc-b); }
+.modal-acts{ display:flex; gap:10px; margin-top:16px; }
+.modal-btn{ flex:1; padding:12px; border:none; border-radius:12px; font-size:13.5px; font-weight:700; cursor:pointer; }
+.modal-btn.ghost{ background:var(--surface-2); border:1px solid var(--stroke); color:var(--text-dim); }
+.modal-btn.go{ background:var(--grad); color:#fff; }
 
-.diag-foot{ display:flex; align-items:flex-start; gap:8px; }
-.diag-tag{
-  flex-shrink:0; font-size:10px; font-weight:700; padding:3px 7px; border-radius:6px;
-  text-transform:uppercase; letter-spacing:.03em;
-}
-.diag-tag.good{ background:rgba(0,230,168,.14); color:var(--mint); }
-.diag-tag.ok{ background:rgba(255,176,32,.14); color:var(--amber); }
-.diag-tag.warn{ background:rgba(255,107,107,.14); color:var(--coral); }
-.diag-tag.na{ background:var(--surface-2); color:var(--text-faint); }
-.diag-note{ font-size:11px; line-height:1.45; color:var(--text-faint); }
-
-/* légende de la cascade, resserrée */
-.wf-legend{ gap:7px 14px; }
-.wf-item{ font-size:11.5px; }
-.hero-value{ transition:text-shadow .4s ease; font-variant-numeric:tabular-nums; }
-
-/* ---- rouleaux du chiffre principal ---- */
-#heroValue{ display:inline-flex; align-items:flex-start; }
-.od-cell{
-  display:inline-block; overflow:hidden;
-  height:1em; line-height:1em;
-}
-.od-strip{ display:block; will-change:transform; }
-.od-digit{ display:block; height:1em; line-height:1em; text-align:center; }
-.od-sep{ display:inline-block; height:1em; line-height:1em; white-space:pre; }
-
-/* ---- nom du projet, saisi dans l'en-tête ---- */
-.project-name{
-  display:block; width:100%;
-  background:transparent; border:none; outline:none;
-  padding:2px 0 3px;
-  font-family:inherit; font-size:12px; font-weight:600;
-  color:var(--text-dim);
-  text-transform:uppercase; letter-spacing:0.08em;
-  border-bottom:1px dashed transparent;
-  transition:color .2s ease, border-color .2s ease;
-}
-.project-name::placeholder{ color:var(--text-faint); text-transform:uppercase; }
-.project-name:hover{ border-bottom-color:var(--stroke); }
-.project-name:focus{
-  color:var(--text); border-bottom-color:var(--accent-b);
-  text-transform:none; letter-spacing:0;
-}
-
-/* fondu du changement de thème : n'agit que pendant la bascule,
-   pour ne pas interférer avec les autres animations le reste du temps */
-html.theme-anim, html.theme-anim *{
-  transition-property: background-color, color, border-color, box-shadow;
-  transition-duration: .25s;
-  transition-timing-function: ease;
-}
-
-/* pastilles de statut : fond teinté dérivé de la couleur, plus sourd */
-.diag-tag.good{ background:color-mix(in srgb, var(--mint) 16%, transparent); color:var(--mint); }
-.diag-tag.ok{ background:color-mix(in srgb, var(--amber) 16%, transparent); color:var(--amber); }
-.diag-tag.warn{ background:color-mix(in srgb, var(--coral) 16%, transparent); color:var(--coral); }
+/* mesure : fige les animations le temps de lire une hauteur */
+.shell.measuring, .shell.measuring *{ transition:none !important; animation:none !important; }
 </style>
 </head>
 <body>
+<div class="frame">
+  <div class="shell" id="shell">
 
-<div class="phone-frame">
-<div class="phone-shell" id="scrollRoot">
-
-  <div class="header-row">
-    <div>
-      <input class="project-name" id="projectName" type="text" placeholder="Nom du projet" maxlength="60" spellcheck="false">
-      <div class="title" id="pageTitle">Surface à construire</div>
-    </div>
-    <div class="header-actions">
-      <button class="icon-btn" id="themeBtn" title="Mode clair / sombre">
-        <span class="icon-sun">☀</span><span class="icon-moon">☾</span>
-      </button>
-      <button class="icon-btn" id="menuBtn" title="Historique">⋮</button>
-    </div>
-  </div>
-
-  <div class="mode-toggle">
-    <span class="mode-thumb" id="modeThumb"></span>
-    <button class="active" data-mode="objectif">Surface</button>
-    <button data-mode="terrain">Terrain</button>
-    <button data-mode="surface">Rendement</button>
-  </div>
-
-  <!-- HERO RESULT -->
-  <div class="hero" id="hero">
-    <div class="hero-label" id="heroLabel">Surface nécessaire</div>
-    <div class="hero-value"><span id="heroValue">—</span><span class="unit" id="heroUnit">m² SBP</span></div>
-    <div class="hero-sub">
-      <span class="hero-badge" id="heroBadge"><span class="pip"></span><span id="heroBadgeText">calcul en cours</span></span>
-    </div>
-  </div>
-
-  <div class="alert-box" id="alertBox"><span class="alert-icon">⚠</span><span id="alertText"></span></div>
-
-  <div class="pager" id="pager">
-    <section class="page" data-page="0">
-
-  <!-- INPUTS: MONTANTS -->
-  <div class="section-title">
-    <span>Montants</span>
-    <span class="section-title-right"><span class="hint">CHF</span><button class="lock-btn" id="lockMontants" title="Verrouiller les montants">🔓</button></span>
-  </div>
-  <div class="card" id="cardMontants">
-    <div class="slider-row" id="objectifBar">
-      <div class="slider-top">
-        <span class="row-label" id="cibleLabel">Rendement annuel cible
-          <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Rendement annualisé sur fonds propres que tu vises (TRI simplifié). C'est lui qui pilote tout le calcul.</span></span>
-        </span>
-        <span class="slider-val" id="val_cible">12.0%</span>
-      </div>
-      <div class="track-wrap"><span class="usual-band" data-for="sl_cible" data-umin="12" data-umax="20"></span><input type="range" id="sl_cible" min="4" max="30" step="0.5" value="12"></div>
-    </div>
-    <div class="row">
-      <div class="row-text"><div class="row-label">Terrain
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Prix d'achat du terrain, avant les frais d'acquisition (notaire, droits de mutation, RF).</span></span>
-      </div><div class="row-note">Prix d'achat</div></div>
-      <div class="field"><input id="in_terrain" type="text" inputmode="numeric" value="1'500'000"><span class="suffix">CHF</span></div>
-    </div>
-    <div class="row">
-      <div class="row-text"><div class="row-label">Surface de la parcelle
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Surface totale du terrain, base du calcul de la surface constructible max.</span></span>
-      </div><div class="row-note">Cadastre</div></div>
-      <div class="field"><input id="in_parcelle" type="text" inputmode="numeric" value="900"><span class="suffix">m²</span></div>
-    </div>
-    <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Indice d'utilisation du sol (IUS)
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Ratio SBP totale / surface de parcelle, tous étages confondus — peut dépasser 1 (ex. 1.0 à 2.0+ en zone de développement genevoise). Surface max = parcelle × IUS. Ne pas confondre avec le coefficient d'emprise au sol, qui ne limite que l'empreinte du rez.</span></span>
-      </span><span class="slider-val" id="val_coef">0.80</span></div>
-      <div class="track-wrap"><span class="usual-band" data-for="sl_coef" data-umin="0.6" data-umax="1.2"></span><input type="range" id="sl_coef" min="0.1" max="3" step="0.05" value="0.8"></div>
-    </div>
-    <div class="row">
-      <div class="row-text"><div class="row-label">Surface constructible max
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Parcelle × indice d'utilisation du sol (IUS). Au-delà, le projet n'est pas réalisable sur ce terrain.</span></span>
-      </div><div class="row-note">Calculé automatiquement</div></div>
-      <span class="locked-pill" id="maxBuildablePill">— m²</span>
-    </div>
-    <div class="row gauge-row" id="gaugeRow">
-      <div class="gauge-wrap">
-        <div class="gauge-head">
-          <span class="gauge-label" id="gaugeLabel">—</span>
-          <span class="gauge-pct" id="gaugePct">—</span>
+    <!-- ---------- zone figée ---------- -->
+    <div class="top">
+      <div class="head" id="head">
+        <div style="flex:1;min-width:0">
+          <input class="project-name" id="fProject" type="text" placeholder="Nom du projet" maxlength="60" spellcheck="false">
+          <div class="head-title" id="pageTitle">Surface à construire</div>
         </div>
-        <div class="gauge-track"><div class="gauge-fill" id="gaugeFill"></div></div>
-      </div>
-    </div>
-    <div class="row">
-      <div class="row-text"><div class="row-label">Coût de construction
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Coût par m² de surface brute de plancher (SBP), hors terrain et hors TVA.</span></span>
-      </div><div class="row-note">Par m² SBP</div></div>
-      <div class="field"><input id="in_cc" type="text" inputmode="numeric" value="4'000"><span class="suffix">/m²</span></div>
-    </div>
-    <div class="row">
-      <div class="row-text"><div class="row-label">Prix de vente
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Prix de vente par m² SBP, moyenne tous lots confondus.</span></span>
-      </div><div class="row-note">Par m² SBP</div></div>
-      <div class="field"><input id="in_pv" type="text" inputmode="numeric" value="16'000"><span class="suffix">/m²</span></div>
-    </div>
-    <div class="row">
-      <div class="row-text"><div class="row-label">Durée du projet
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Durée totale entre l'achat du terrain et la vente du dernier lot. Pas de 0.5 an (un semestre) — ex. 2.5 pour 30 mois.</span></span>
-      </div><div class="row-note">Par semestre (0.5)</div></div>
-      <div class="field"><input id="in_duree" type="text" inputmode="decimal" value="3.0"><span class="suffix">ans</span></div>
-    </div>
-    <div class="row">
-      <div class="row-text"><div class="row-label">Surface moyenne / logement
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Sert à estimer le nombre de logements, utile pour raisonner la prévente en nombre de lots.</span></span>
-      </div><div class="row-note">Pour estimer le nb de lots</div></div>
-      <div class="field"><input id="in_logsize" type="text" inputmode="numeric" value="100"><span class="suffix">m²</span></div>
-    </div>
-    <div class="row hidden" id="row_surface">
-      <div class="row-text"><div class="row-label">Surface à construire
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Surface que tu prévois de construire. Le bouton « max » reprend la surface constructible maximale (parcelle × IUS).</span></span>
-      </div><div class="row-note">SBP du projet</div></div>
-      <div class="surface-control">
-        <button class="max-btn" id="btnUseMax" title="Utiliser la surface constructible max">max</button>
-        <div class="field"><input id="in_surface" type="text" inputmode="numeric" value="300"><span class="suffix">m²</span></div>
-      </div>
-    </div>
-  </div>
-
-    </section>
-    <section class="page" data-page="1">
-  <!-- INPUTS: COÛTS & FISCALITÉ -->
-  <div class="section-title">
-    <span>Coûts &amp; fiscalité</span>
-    <span class="section-title-right"><span class="hint">glisser</span><button class="lock-btn" id="lockCouts" title="Verrouiller les coûts">🔓</button></span>
-  </div>
-  <div class="card" id="cardCouts">
-    <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Frais d'acquisition terrain
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Droits de mutation, notaire, registre foncier — environ 4% au total à Genève.</span></span>
-      </span><span class="slider-val" id="val_fraisacq">4.0%</span></div>
-      <div class="track-wrap"><span class="usual-band" data-for="sl_fraisacq" data-umin="3.5" data-umax="4.5"></span><input type="range" id="sl_fraisacq" min="0" max="8" step="0.1" value="4"></div>
-    </div>
-    <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Imprévus de chantier
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Coussin de sécurité ajouté au coût de construction. Un dépassement de 5 à 8% est courant sur une opération.</span></span>
-      </span><span class="slider-val" id="val_imprev">5.0%</span></div>
-      <div class="track-wrap"><span class="usual-band" data-for="sl_imprev" data-umin="5" data-umax="8"></span><input type="range" id="sl_imprev" min="0" max="10" step="0.5" value="5"></div>
-    </div>
-    <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Frais de commercialisation
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Courtage et frais de vente, en % du chiffre d'affaires. Typiquement 3 à 5% à Genève.</span></span>
-      </span><span class="slider-val" id="val_comm">4.0%</span></div>
-      <div class="track-wrap"><span class="usual-band" data-for="sl_comm" data-umin="3" data-umax="5"></span><input type="range" id="sl_comm" min="0" max="10" step="0.5" value="4"></div>
-    </div>
-    <div class="slider-row">
-      <div class="slider-top"><span class="row-label">TVA construction
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Taux légal suisse — 8.1% depuis le 01.01.2024.</span></span>
-      </span><span class="slider-val" id="val_tva">8.1%</span></div>
-      <div class="track-wrap"><span class="usual-band" data-for="sl_tva" data-umin="8.1" data-umax="8.1"></span><input type="range" id="sl_tva" min="0" max="12" step="0.1" value="8.1"></div>
-    </div>
-    <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Impôt sur le bénéfice (IS)
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Taux effectif d'impôt sur le bénéfice de la société — environ 14.7% à Genève en 2024.</span></span>
-      </span><span class="slider-val" id="val_is">14.7%</span></div>
-      <div class="track-wrap"><span class="usual-band" data-for="sl_is" data-umin="14" data-umax="15"></span><input type="range" id="sl_is" min="0" max="30" step="0.1" value="14.7"></div>
-    </div>
-  </div>
-
-    </section>
-    <section class="page" data-page="2">
-  <!-- INPUTS: FINANCEMENT BANCAIRE -->
-  <div class="section-title">
-    <span>Financement bancaire</span>
-    <span class="section-title-right"><span class="hint">glisser</span><button class="lock-btn" id="lockFin" title="Verrouiller le financement">🔓</button></span>
-  </div>
-  <div class="card" id="cardFin">
-    <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Crédit bancaire construction
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Part du coût de construction financée par la banque. Le solde, plus tout le terrain, reste en fonds propres.</span></span>
-      </span><span class="slider-val" id="val_credit">80%</span></div>
-      <div class="track-wrap"><span class="usual-band" data-for="sl_credit" data-umin="70" data-umax="80"></span><input type="range" id="sl_credit" min="0" max="100" step="5" value="80"></div>
-    </div>
-    <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Taux d'intérêt du crédit
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Taux d'intérêt annuel appliqué au crédit de construction pendant le chantier.</span></span>
-      </span><span class="slider-val" id="val_taux">3.0%</span></div>
-      <div class="track-wrap"><span class="usual-band" data-for="sl_taux" data-umin="2.5" data-umax="3.5"></span><input type="range" id="sl_taux" min="0" max="8" step="0.1" value="3"></div>
-    </div>
-    <div class="slider-row">
-      <div class="slider-top"><span class="row-label">Utilisation moyenne du crédit
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Solde moyen réellement emprunté pendant le chantier, en % du plafond (le crédit est tiré progressivement, pas d'un coup).</span></span>
-      </span><span class="slider-val" id="val_util">50%</span></div>
-      <div class="track-wrap"><span class="usual-band" data-for="sl_util" data-umin="45" data-umax="55"></span><input type="range" id="sl_util" min="0" max="100" step="5" value="50"></div>
-    </div>
-  </div>
-
-    </section>
-  </div>
-
-  <nav class="page-nav" id="pageNav">
-      <button class="page-dot active" data-goto="0"><span class="dot-pip"></span><span class="dot-label">Montants</span></button>
-      <button class="page-dot" data-goto="1"><span class="dot-pip"></span><span class="dot-label">Coûts</span></button>
-      <button class="page-dot" data-goto="2"><span class="dot-pip"></span><span class="dot-label">Banque</span></button>
-  </nav>
-
-
-  <!-- PANNEAU RÉSULTAT COULISSANT -->
-  <div class="result-sheet" id="resultSheet">
-    <div class="rs-peek" id="rsPeek">
-      <div class="rs-grip"></div>
-      <div class="rs-peek-row">
-        <div class="rs-peek-item">
-          <span class="rs-peek-label">Résultat net</span>
-          <span class="rs-peek-value" id="peek_rn">—</span>
-        </div>
-        <div class="rs-peek-item">
-          <span class="rs-peek-label">TRI</span>
-          <span class="rs-peek-value accent" id="peek_rann">—</span>
-        </div>
-        <span class="rs-chevron" id="rsChevron">⌃</span>
-      </div>
-    </div>
-    <div class="rs-body" id="rsBody">
-
-      <!-- CASCADE -->
-      <div class="section-title"><span>Du chiffre d'affaires au résultat net</span></div>
-      <div class="card wf-card">
-        <div class="wf-bar" id="wfBar"></div>
-        <div class="wf-legend" id="wfLegend"></div>
-      </div>
-
-      <div class="section-title">
-        <span>Diagnostic</span>
-        <span class="section-title-right"><span class="hint">vs repères genevois</span></span>
-      </div>
-      <div class="card" id="diagCard"></div>
-
-  
-
-    <!-- 1. LES CHIFFRES DE LA DÉCISION -->
-    <div class="section-title">
-      <span>Résultat</span>
-      <span class="section-title-right"><span class="hint" id="verifSurf">— m²</span></span>
-    </div>
-    <div class="card result-card">
-      <div class="result-main">
-        <div class="result-block">
-          <div class="result-label">Résultat net</div>
-          <div class="result-value" id="v_rn">—</div>
-        </div>
-        <div class="result-block">
-          <div class="result-label">Rendement (TRI)</div>
-          <div class="result-value accent" id="v_rann">—</div>
+        <div class="head-acts">
+          <button class="icon-btn" id="btnTheme" title="Mode clair / sombre"><span class="icon-sun">☀</span><span class="icon-moon">☾</span></button>
+          <button class="icon-btn" id="btnMenu" title="Projets classés">⋮</button>
         </div>
       </div>
-      <div class="breakdown-row"><span class="k">Marge nette (% du CA)
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Résultat net ÷ chiffre d'affaires. Repère courant : en dessous de ~8%, la marge absorbe mal les aléas.</span></span>
-      </span><span class="v" id="v_marge">—</span></div>
-      <div class="breakdown-row"><span class="k">Nombre de logements (est.)
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Surface ÷ surface moyenne par logement. Utile pour convertir un taux de prévente en nombre de lots.</span></span>
-      </span><span class="v" id="v_nblog">—</span></div>
-    </div>
 
-    <!-- 2. COÛTS -->
-    <div class="section-title"><span>Coûts</span></div>
-    <div class="card">
-      <div class="breakdown-row"><span class="k">Construction (incl. TVA, imprévus)
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Surface × coût/m² × (1 + TVA) × (1 + imprévus).</span></span>
-      </span><span class="v" id="v_ccons">—</span></div>
-      <div class="breakdown-row"><span class="k">Taxe d'équipement
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">47 CHF/m² SBP à Genève, plafonnée à 2.5% du coût de construction.</span></span>
-      </span><span class="v" id="v_taxe">—</span></div>
-      <div class="breakdown-row"><span class="k">Terrain (frais compris)
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Terrain × (1 + frais d'acquisition).</span></span>
-      </span><span class="v" id="v_cterr">—</span></div>
-      <div class="breakdown-row subtotal"><span class="k">Coût total du projet</span><span class="v" id="v_ctot">—</span></div>
-      <div class="breakdown-row"><span class="k">Poids du terrain
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Coût du terrain ÷ coût total. Au-delà d'environ 25-30%, signal classique que le terrain est cher pour l'opération.</span></span>
-      </span><span class="v" id="v_poids">—</span></div>
-    </div>
+      <div class="modes" id="modes">
+        <span class="modes-thumb" id="modesThumb"></span>
+        <button class="on" data-mode="objectif">Surface</button>
+        <button data-mode="terrain">Terrain</button>
+        <button data-mode="surface">Rendement</button>
+      </div>
 
-    <!-- 3. FINANCEMENT -->
-    <div class="section-title"><span>Financement</span></div>
-    <div class="card">
-      <div class="breakdown-row"><span class="k">Crédit bancaire
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Part du coût de construction couverte par le crédit bancaire.</span></span>
-      </span><span class="v" id="v_fin">—</span></div>
-      <div class="breakdown-row subtotal"><span class="k">Apport en fonds propres
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Coût total moins le crédit bancaire — ce que tu sors de ta poche.</span></span>
-      </span><span class="v" id="v_apport">—</span></div>
-      <div class="breakdown-row"><span class="k">Intérêts intercalaires
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Crédit × taux × durée × utilisation moyenne.</span></span>
-      </span><span class="v neg" id="v_int">—</span></div>
-    </div>
-
-    <!-- 4. RECETTES & FISCALITÉ -->
-    <div class="section-title"><span>Recettes &amp; fiscalité</span></div>
-    <div class="card">
-      <div class="breakdown-row"><span class="k">Chiffre d'affaires
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Surface × prix de vente au m².</span></span>
-      </span><span class="v" id="v_ca">—</span></div>
-      <div class="breakdown-row"><span class="k">Frais de commercialisation
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Chiffre d'affaires × taux de commercialisation (courtage, frais de vente).</span></span>
-      </span><span class="v neg" id="v_comm">—</span></div>
-      <div class="breakdown-row"><span class="k">Impôt sur les sociétés
-        <span class="tip" tabindex="0"><span class="icon">?</span><span class="bubble">Résultat avant impôt × taux d'IS (si le résultat est positif).</span></span>
-      </span><span class="v neg" id="v_impot">—</span></div>
-    </div>
-  <div class="final-save-bar">
-    <button class="final-save-btn" id="finalSaveBtn">📂 Classer le projet</button>
-  </div>
-
-  <div class="reset-bar">
-    <button class="reset-btn" id="resetBtn">Réinitialiser les valeurs par défaut</button>
-  </div>
-
-  <div class="save-note" id="saveNote"><span class="dot"></span><span>Enregistré automatiquement sur cet appareil</span></div>
-
-
-    <details class="limits">
-      <summary>Ce que ce modèle simplifie</summary>
-    <div class="card">
-      <div class="row"><div class="row-text"><div class="row-note">Rendement calculé en TRI sur flux de fonds propres semestriels : terrain et taxe au départ, fonds propres de construction étalés, vente en fin d'opération. Contrôle : la somme des flux égale le résultat net.</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">Intérêts = crédit mobilisé × taux × durée × utilisation moyenne (tirage progressif approximé, pas de courbe de décaissement réelle).</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">TVA ajoutée au coût de construction, non récupérée.</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">Taxe d'équipement genevoise : 47 CHF/m² SBP, plafonnée à 2.5% du coût de construction (plafond appliqué automatiquement).</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">Imprévus appliqués au coût de construction ; frais de commercialisation déduits du chiffre d'affaires.</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">Impôt personnel du promoteur (IBGI si personne physique) non calculé — seulement l'IS société.</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">Terrain payé 100% fonds propres, seule la construction est financée par la banque.</div></div></div>
-      <div class="row"><div class="row-text"><div class="row-note">Aucun aléa de chantier, retard, ou taux de prévente modélisé.</div></div></div>
-    </div>
-    </details>
-
-  <div class="footnote">
-    <b>Formule :</b> en mode "Cible ➜ Surface", la surface est résolue algébriquement pour que le résultat net (après IS et intérêts) rapporte exactement le rendement cible sur les fonds propres, composé sur la durée. En mode "Surface ➜ Rendement", c'est l'inverse : la surface est fixée et le rendement annualisé en découle.
-  </div>
+      <div class="hero" id="hero">
+        <div class="hero-label" id="heroLabel">Surface nécessaire</div>
+        <div class="hero-val"><span class="roll" id="heroVal">—</span><span class="unit" id="heroUnit">m² SBP</span></div>
+        <div class="hero-sub">
+          <span class="hero-badge" id="heroBadge"><span class="pip"></span><span id="heroBadgeText">—</span></span>
+        </div>
+      </div>
 
     </div>
-  </div>
 
-</div><!-- /phone-shell (scrollRoot) -->
-
-<!-- NAME PROJECT MODAL -->
-<div class="modal-backdrop" id="nameModalBackdrop">
-  <div class="modal-box">
-    <div class="modal-title">Nommer ce projet</div>
-    <input type="text" class="modal-input" id="nameModalInput" placeholder="Nom du projet">
-    <div class="modal-actions">
-      <button class="modal-btn ghost" id="nameModalCancel">Annuler</button>
-      <button class="modal-btn primary" id="nameModalSave">Enregistrer</button>
+    <!-- ---------- pages (contenu injecté depuis le registre) ---------- -->
+    <div class="pager-wrap">
+      <div class="pager" id="pager"></div>
+      <button class="turn left off" id="turnPrev" aria-label="Page précédente">‹</button>
+      <button class="turn right" id="turnNext" aria-label="Page suivante">›</button>
     </div>
+
+    <!-- ---------- panneau résultat ---------- -->
+    <div class="sheet" id="sheet">
+      <div class="sheet-peek" id="peek">
+        <div class="sheet-grip"></div>
+        <div class="peek-row">
+          <div class="peek-item">
+            <span class="peek-label">Résultat net</span>
+            <span class="peek-val roll" id="peekNet">—</span>
+          </div>
+          <div class="peek-item">
+            <span class="peek-label">TRI</span>
+            <span class="peek-val accent roll" id="peekTri">—</span>
+          </div>
+          <span class="peek-chev">⌃</span>
+        </div>
+      </div>
+
+      <div class="sheet-body" id="sheetBody">
+
+        <div class="sec"><span>Du chiffre d'affaires au résultat net</span></div>
+        <div class="card wf">
+          <div class="wf-bar" id="wfBar"></div>
+          <div class="wf-legend" id="wfLegend"></div>
+        </div>
+
+        <div class="sec"><span>Diagnostic</span><span class="sec-right"><span class="sec-hint">vs repères genevois</span></span></div>
+        <div class="card" id="diag"></div>
+
+        <div class="sec"><span>Résultat</span><span class="sec-right"><span class="sec-hint" id="resSurface">— m²</span></span></div>
+        <div class="card res-card">
+          <div class="res-main">
+            <div class="res-block"><div class="res-label">Résultat net</div><div class="res-value" id="oNet">—</div></div>
+            <div class="res-block"><div class="res-label">Rendement (TRI)</div><div class="res-value accent" id="oTri">—</div></div>
+          </div>
+          <div class="line"><span class="line-k">Marge nette (% du CA)</span><span class="line-v" id="oMarge">—</span></div>
+          <div class="line"><span class="line-k">Nombre de logements (est.)</span><span class="line-v" id="oLots">—</span></div>
+        </div>
+
+        <div class="sec"><span>Coûts</span></div>
+        <div class="card">
+          <div class="line"><span class="line-k">Construction (incl. TVA, imprévus)</span><span class="line-v" id="oCons">—</span></div>
+          <div class="line"><span class="line-k">Taxe d'équipement</span><span class="line-v" id="oTaxe">—</span></div>
+          <div class="line"><span class="line-k">Terrain (frais compris)</span><span class="line-v" id="oTerr">—</span></div>
+          <div class="line total"><span class="line-k">Coût total du projet</span><span class="line-v" id="oTot">—</span></div>
+          <div class="line"><span class="line-k">Poids du terrain</span><span class="line-v" id="oPoids">—</span></div>
+        </div>
+
+        <div class="sec"><span>Financement</span></div>
+        <div class="card">
+          <div class="line"><span class="line-k">Crédit bancaire</span><span class="line-v" id="oFin">—</span></div>
+          <div class="line total"><span class="line-k">Apport en fonds propres</span><span class="line-v" id="oApport">—</span></div>
+          <div class="line"><span class="line-k">Intérêts intercalaires</span><span class="line-v neg" id="oInt">—</span></div>
+        </div>
+
+        <div class="sec"><span>Recettes &amp; fiscalité</span></div>
+        <div class="card">
+          <div class="line"><span class="line-k">Chiffre d'affaires</span><span class="line-v" id="oCa">—</span></div>
+          <div class="line"><span class="line-k">Frais de commercialisation</span><span class="line-v neg" id="oComm">—</span></div>
+          <div class="line"><span class="line-k">Impôt sur les sociétés</span><span class="line-v neg" id="oImpot">—</span></div>
+        </div>
+
+        <div class="actions"><button class="btn-primary" id="btnFile">📂 Classer le projet</button></div>
+        <button class="btn-ghost" id="btnReset">Réinitialiser les valeurs par défaut</button>
+        <div class="autosave"><span class="pip"></span><span>Enregistré automatiquement sur cet appareil</span></div>
+
+        <details class="limits">
+          <summary>À quoi sert ce modèle, et ce qu'il simplifie</summary>
+          <div class="card" id="limitsList"></div>
+        </details>
+
+        <div class="footnote">
+          <b>Méthode :</b> le rendement est un TRI sur flux de fonds propres semestriels — terrain et taxe au départ,
+          fonds propres de construction étalés, vente en fin d'opération. La somme des flux égale le résultat net.
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- surfaces flottantes ---------- -->
+    <div class="scrim" id="scrim"></div>
+    <div class="drawer" id="drawer">
+      <div class="drawer-grip"></div>
+      <div class="drawer-head">
+        <span class="drawer-title">Projets classés</span>
+        <div class="drawer-acts">
+          <button class="cmp-btn" id="btnCompare" disabled>Comparer</button>
+          <button class="x-btn" id="btnDrawerClose">✕</button>
+        </div>
+      </div>
+      <div class="drawer-hint" id="drawerHint">Coche 2 ou 3 projets pour les comparer.</div>
+      <div class="drawer-list" id="drawerList"></div>
+    </div>
+
+    <div class="overlay" id="cmpOverlay">
+      <div class="overlay-head">
+        <span class="drawer-title">Comparaison</span>
+        <button class="x-btn" id="btnCmpClose">✕</button>
+      </div>
+      <div class="overlay-body" id="cmpBody"></div>
+    </div>
+
+    <div class="modal" id="modal">
+      <div class="modal-box">
+        <div class="modal-title">Nommer ce projet</div>
+        <input type="text" class="modal-input" id="modalInput" placeholder="Nom du projet">
+        <div class="modal-acts">
+          <button class="modal-btn ghost" id="btnModalCancel">Annuler</button>
+          <button class="modal-btn go" id="btnModalSave">Enregistrer</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
-
-<!-- HISTORY SHEET -->
-<div class="sheet-backdrop" id="sheetBackdrop"></div>
-<div class="sheet" id="sheet">
-  <div class="sheet-handle"></div>
-  <div class="sheet-header">
-    <span class="sheet-title">Projets classés</span>
-    <div class="sheet-head-actions">
-      <button class="cmp-btn" id="cmpBtn" disabled>Comparer</button>
-      <button class="sheet-close" id="sheetClose">✕</button>
-    </div>
-  </div>
-  <div class="cmp-hint" id="cmpHint">Coche 2 ou 3 projets pour les comparer.</div>
-  <div class="sheet-list" id="sheetList"></div>
-</div>
-
-
-  <!-- COMPARAISON -->
-  <div class="cmp-overlay" id="cmpOverlay">
-    <div class="cmp-header">
-      <span class="sheet-title">Comparaison</span>
-      <button class="sheet-close" id="cmpClose">✕</button>
-    </div>
-    <div class="cmp-scroll" id="cmpTable"></div>
-  </div>
-</div><!-- /phone-frame -->
-
 <script>
+"use strict";
+/* ==========================================================================
+   [JS-1] OUTILS
+   ========================================================================== */
 const $ = id => document.getElementById(id);
-const STORAGE_KEY = 'promoteur_sim_state_v3';
-const HISTORY_KEY = 'promoteur_sim_history_v1';
-const THEME_KEY = 'promoteur_sim_theme';
-let memoryFallback = null;
-let historyMemory = null;
+const el = (tag, cls, txt) => { const n = document.createElement(tag); if(cls) n.className = cls; if(txt != null) n.textContent = txt; return n; };
+const clamp = (v,a,b) => Math.max(a, Math.min(b, v));
+const num = s => parseFloat(String(s).replace(/[^0-9.\-]/g,'')) || 0;
 
-function parseNum(str){ return parseFloat(String(str).replace(/[^0-9.\-]/g,'')) || 0; }
-function fmtInt(n){ return Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'"); }
-function fmtCHF(n){ if(!isFinite(n)) return '—'; return fmtInt(n) + " CHF"; }
-function fmtPct(n){ if(!isFinite(n)) return '—'; return (n*100).toFixed(1) + "%"; }
+const fmtInt = n => Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, "'");
+const fmtCHF = n => isFinite(n) ? fmtInt(n) + ' CHF' : '—';
+const fmtPct = n => isFinite(n) ? (n*100).toFixed(1) + '%' : '—';
 
-const numInputs = ['in_terrain','in_parcelle','in_cc','in_pv','in_duree','in_surface','in_logsize'];
-const sliders = { cible:'sl_cible', fraisacq:'sl_fraisacq', imprev:'sl_imprev', comm:'sl_comm', tva:'sl_tva', is:'sl_is', credit:'sl_credit', taux:'sl_taux', util:'sl_util', coef:'sl_coef' };
-
-let montantsLocked = false;
-let coutsLocked = false;
-let finLocked = false;
-
-const MONTANTS_IDS = ['in_terrain','in_parcelle','in_cc','in_pv','in_duree','in_surface','in_logsize','sl_coef'];
-const COUTS_IDS = ['sl_fraisacq','sl_imprev','sl_comm','sl_tva','sl_is'];
-const FIN_IDS = ['sl_credit','sl_taux','sl_util'];
-
-function applyLockUI(){
-  $('lockMontants').textContent = montantsLocked ? '🔒' : '🔓';
-  $('cardMontants').classList.toggle('locked', montantsLocked);
-  MONTANTS_IDS.forEach(id=> $(id).disabled = montantsLocked);
-  // en mode 'terrain' le prix du terrain reste un résultat, jamais une saisie
-  if(mode === 'terrain') $('in_terrain').disabled = true;
-
-  $('lockCouts').textContent = coutsLocked ? '🔒' : '🔓';
-  $('cardCouts').classList.toggle('locked', coutsLocked);
-  COUTS_IDS.forEach(id=> $(id).disabled = coutsLocked);
-
-  $('lockFin').textContent = finLocked ? '🔒' : '🔓';
-  $('cardFin').classList.toggle('locked', finLocked);
-  FIN_IDS.forEach(id=> $(id).disabled = finLocked);
-}
-$('lockMontants').addEventListener('click', ()=>{
-  montantsLocked = !montantsLocked;
-  applyLockUI();
-  saveState();
-});
-$('lockCouts').addEventListener('click', ()=>{
-  coutsLocked = !coutsLocked;
-  applyLockUI();
-  saveState();
-});
-$('lockFin').addEventListener('click', ()=>{
-  finLocked = !finLocked;
-  applyLockUI();
-  saveState();
-});
-
-let mode = 'objectif'; // 'objectif' | 'surface'
-
-function formatNumericField(el){
-  if(el.id === 'in_duree'){
-    let v = Math.max(0.5, Math.round(parseNum(el.value)*2)/2); // pas de 0.5 an
-    el.value = v.toFixed(1);
-  } else {
-    el.value = fmtInt(parseNum(el.value));
-  }
-}
-
-numInputs.forEach(id=>{
-  const el = $(id);
-  el.addEventListener('input', compute);
-  el.addEventListener('blur', ()=>{ formatNumericField(el); compute(); });
-});
-
-Object.entries(sliders).forEach(([key, id])=>{
-  $(id).addEventListener('input', ()=>{
-    $('val_'+key).textContent = key === 'coef'
-      ? parseFloat($(id).value).toFixed(2)
-      : parseFloat($(id).value).toFixed(1) + '%';
-    compute();
-  });
-});
-
-function applyModeUI(){
-  // couleur d'accent + glissement de l'indicateur
-  const order = ['objectif','terrain','surface'];
-  const idx = Math.max(0, order.indexOf(mode));
-  document.documentElement.setAttribute('data-mode', mode);
-  $('modeThumb').style.transform = `translateX(${idx*100}%)`;
-  document.querySelectorAll('.mode-toggle button').forEach(b=>
-    b.classList.toggle('active', b.dataset.mode === mode));
-
-  // la surface se saisit dans les modes 'surface' et 'terrain'
-  $('row_surface').classList.toggle('hidden', mode === 'objectif');
-  // en mode terrain, le prix du terrain est le résultat, pas une saisie
-  $('in_terrain').disabled = (mode === 'terrain') || montantsLocked;
-  $('in_terrain').style.opacity = mode === 'terrain' ? '0.45' : '';
-
-  $('pageTitle').textContent =
-    mode === 'objectif' ? 'Surface à construire' :
-    mode === 'surface'  ? 'Rendement obtenu'     : 'Prix max du terrain';
-
-  // en mode Rendement, la cible n'entre pas dans le calcul : elle reste un repère
-  $('cibleLabel').firstChild.textContent =
-    mode === 'surface' ? 'Rendement annuel cible (repère) ' : 'Rendement annuel cible ';
-
-  // la zone fixe change de hauteur selon le mode : on remesure le gain du repli
-  if(typeof measureCompactGain === 'function') requestAnimationFrame(measureCompactGain);
-}
-
-$('projectName').addEventListener('input', saveState);
-
-$('btnUseMax').addEventListener('click', ()=>{
-  const coef = parseFloat($('sl_coef').value);
-  const parcelle = parseNum($('in_parcelle').value);
-  if(parcelle > 0){
-    $('in_surface').value = fmtInt(Math.floor(parcelle*coef));
-    compute();
-  }
-});
-
-// mode toggle
-document.querySelectorAll('.mode-toggle button').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    mode = btn.dataset.mode;
-    heroInstant = true;          // changement de mode : bascule sèche, sans rouleau
-    applyModeUI();
-    compute();
-    heroInstant = false;
-  });
-});
-
-// verif/notes tabs
-/* ---------- theme ---------- */
-let themeAnimTimer = null;
-function setTheme(t, animate){
-  if(animate){
-    document.documentElement.classList.add('theme-anim');
-    if(themeAnimTimer) clearTimeout(themeAnimTimer);
-    themeAnimTimer = setTimeout(()=>document.documentElement.classList.remove('theme-anim'), 320);
-  }
-  document.documentElement.setAttribute('data-theme', t);
-  try{ localStorage.setItem(THEME_KEY, t); }catch(e){}
-}
-$('themeBtn').addEventListener('click', ()=>{
-  const current = document.documentElement.getAttribute('data-theme') || 'dark';
-  setTheme(current === 'dark' ? 'light' : 'dark', true);
-});
-
-/* ---------- history sheet ---------- */
-function openSheet(){ $('sheetBackdrop').classList.add('open'); $('sheet').classList.add('open'); renderHistory(); }
-function closeSheet(){ $('sheetBackdrop').classList.remove('open'); $('sheet').classList.remove('open'); }
-$('menuBtn').addEventListener('click', openSheet);
-$('sheetBackdrop').addEventListener('click', closeSheet);
-$('sheetClose').addEventListener('click', closeSheet);
-
-function loadHistory(){
-  try{
-    const raw = localStorage.getItem(HISTORY_KEY);
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  return historyMemory ? JSON.parse(historyMemory) : [];
-}
-function saveHistoryList(list){
-  const json = JSON.stringify(list);
-  try{ localStorage.setItem(HISTORY_KEY, json); }
-  catch(e){ historyMemory = json; }
-}
-
-let cmpSelection = [];
-
-function renderHistory(){
-  const list = loadHistory();
-  const el = $('sheetList');
-  el.innerHTML = '';
-  cmpSelection = cmpSelection.filter(id => list.some(h=>h.id===id));
-  updateCmpBtn();
-  if(list.length === 0){
-    el.innerHTML = '<div class="hist-empty">Aucun projet classé pour l\'instant.<br>Utilise « Classer le projet » pour le retrouver ici.</div>';
-    return;
-  }
-  list.forEach(entry=>{
-    const item = document.createElement('div');
-    item.className = 'hist-item';
-    const on = cmpSelection.includes(entry.id);
-    item.innerHTML = `
-      <button class="hist-check${on?' on':''}" title="Sélectionner pour comparer">✓</button>
-      <div class="hist-main">
-        <div class="hist-label"></div>
-        <div class="hist-date"></div>
-      </div>
-      <button class="hist-del" title="Supprimer">🗑</button>
-    `;
-    item.querySelector('.hist-label').textContent = entry.label;
-    item.querySelector('.hist-date').textContent = entry.ts;
-
-    item.querySelector('.hist-check').addEventListener('click', e=>{
-      e.stopPropagation();
-      const i = cmpSelection.indexOf(entry.id);
-      if(i >= 0) cmpSelection.splice(i,1);
-      else if(cmpSelection.length < 3) cmpSelection.push(entry.id);
-      renderHistory();
-    });
-    item.querySelector('.hist-main').addEventListener('click', ()=>{
-      applyState(entry.state); compute(); closeSheet();
-    });
-    item.querySelector('.hist-del').addEventListener('click', e=>{
-      e.stopPropagation();
-      saveHistoryList(loadHistory().filter(h=>h.id !== entry.id));
-      renderHistory();
-    });
-    el.appendChild(item);
-  });
-}
-
-function updateCmpBtn(){
-  const n = cmpSelection.length;
-  $('cmpBtn').disabled = (n < 2);
-  $('cmpBtn').textContent = n >= 2 ? `Comparer (${n})` : 'Comparer';
-  $('cmpHint').textContent = n === 0
-    ? 'Coche 2 ou 3 projets pour les comparer.'
-    : (n === 1 ? 'Coche au moins un autre projet.' : `${n} projets sélectionnés.`);
-}
-
-/* --- recalcule un projet enregistré sans toucher à l'écran --- */
-function metricsFromState(st){
-  const num = k => parseFloat(String(st[k] ?? '0').replace(/[^0-9.\-]/g,'')) || 0;
-  const sl  = k => parseFloat(st[k]);
-  const raw = {
-    terrain:num('in_terrain'), cc:num('in_cc'), pv:num('in_pv'),
-    duree:Math.max(num('in_duree'),0.5),
-    tva:sl('sl_tva')/100, fraisAcq:sl('sl_fraisacq')/100, is:sl('sl_is')/100,
-    credit:sl('sl_credit')/100, taux:sl('sl_taux')/100, util:sl('sl_util')/100,
-    imprev:sl('sl_imprev')/100, commRate:sl('sl_comm')/100
-  };
-  const cible = sl('sl_cible')/100;
-  const coef = sl('sl_coef');
-  const parcelle = num('in_parcelle');
-  const mode = st.mode || 'objectif';
-  let p = mkParams(raw), S = null;
-
-  if(mode === 'objectif'){
-    const ex = solveSurface(cible, p);
-    if(isFinite(ex)) S = Math.ceil(ex);
-  } else {
-    S = num('in_surface');
-    if(mode === 'terrain'){
-      const T = solveTerrain(cible, S, raw);
-      if(isFinite(T) && T > 0) p = mkParams(Object.assign({}, raw, {terrain:T}));
-    }
-  }
-  if(!S || S <= 0) return null;
-  const m = metrics(S, p);
+/* stockage : localStorage avec repli mémoire si le contexte le bloque */
+const Store = (() => {
+  const mem = {};
   return {
-    mode, S, m, cible,
-    surfaceMax: parcelle*coef,
-    marge: m.ca > 0 ? m.rn/m.ca : NaN,
-    poids: m.ctot > 0 ? m.cterr/m.ctot : NaN,
-    duree: raw.duree
+    get(k){ try{ const v = localStorage.getItem(k); if(v !== null) return v; }catch(e){} return mem[k] ?? null; },
+    set(k,v){ try{ localStorage.setItem(k,v); }catch(e){ mem[k] = v; } },
+    del(k){ try{ localStorage.removeItem(k); }catch(e){} delete mem[k]; }
   };
-}
+})();
+const K_STATE = 'promo.state', K_HIST = 'promo.history', K_THEME = 'promo.theme';
 
-const CMP_ROWS = [
-  ['Surface',            r => fmtInt(r.S)+' m²',        null],
-  ['Durée',              r => r.duree.toFixed(1)+' ans', null],
-  ['Terrain',            r => fmtCHF(r.m.cterr),        'low'],
-  ['Coût total',         r => fmtCHF(r.m.ctot),         'low'],
-  ['Apport',             r => fmtCHF(r.m.apport),       'low'],
-  ['Chiffre d\'affaires', r => fmtCHF(r.m.ca),           'high'],
-  ['Résultat net',       r => fmtCHF(r.m.rn),           'high'],
-  ['Rendement (TRI)',    r => fmtPct(r.m.rann)+'/an',   'high'],
-  ['Marge (% CA)',       r => fmtPct(r.marge),          'high'],
-  ['Poids terrain',      r => fmtPct(r.poids),          'low'],
-];
-const CMP_RAW = {
-  'Terrain': r=>r.m.cterr, 'Coût total': r=>r.m.ctot, 'Apport': r=>r.m.apport,
-  'Chiffre d\'affaires': r=>r.m.ca, 'Résultat net': r=>r.m.rn,
-  'Rendement (TRI)': r=>r.m.rann, 'Marge (% CA)': r=>r.marge, 'Poids terrain': r=>r.poids
-};
+/* ==========================================================================
+   [JS-2] MOTEUR — aucune dépendance au DOM, testable isolément
+   ========================================================================== */
+const TAXE_TAUX = 47;      // CHF/m² SBP, Genève
+const TAXE_PLAF = 0.025;   // plafond : 2.5% du coût de construction
 
-function openCompare(){
-  const list = loadHistory().filter(h=>cmpSelection.includes(h.id));
-  const cols = list.map(h=>({ label:h.label, res:metricsFromState(h.state) })).filter(c=>c.res);
-  if(cols.length < 2){
-    $('cmpTable').innerHTML = '<div class="hist-empty">Ces projets ne peuvent pas être recalculés.</div>';
-  } else {
-    let html = '<table class="cmp-table"><thead><tr><th></th>';
-    cols.forEach(c=>{ html += `<th>${c.label.replace(/</g,'&lt;')}</th>`; });
-    html += '</tr></thead><tbody>';
-    CMP_ROWS.forEach(([name, fmt, better])=>{
-      html += `<tr><td>${name}</td>`;
-      let bestI = -1, worstI = -1;
-      if(better && CMP_RAW[name]){
-        const vals = cols.map(c=>CMP_RAW[name](c.res));
-        const valid = vals.map((v,i)=>({v,i})).filter(o=>isFinite(o.v));
-        if(valid.length > 1){
-          const sorted = [...valid].sort((a,b)=> better==='high' ? b.v-a.v : a.v-b.v);
-          bestI = sorted[0].i; worstI = sorted[sorted.length-1].i;
-        }
-      }
-      cols.forEach((c,i)=>{
-        const cls = i===bestI ? ' class="cmp-best"' : (i===worstI ? ' class="cmp-worst"' : '');
-        html += `<td${cls}>${fmt(c.res)}</td>`;
-      });
-      html += '</tr>';
-    });
-    html += '</tbody></table>';
-    $('cmpTable').innerHTML = html;
-  }
-  $('cmpOverlay').classList.add('open');
-}
-$('cmpBtn').addEventListener('click', openCompare);
-$('cmpClose').addEventListener('click', ()=> $('cmpOverlay').classList.remove('open'));
-
-function collectState(){
-  const state = { mode, montantsLocked, coutsLocked, finLocked,
-                  projectName: $('projectName').value };
-  numInputs.forEach(id=> state[id] = $(id).value);
-  Object.entries(sliders).forEach(([key,id])=> state[id] = $(id).value);
-  return state;
-}
-
-function openNameModal(){
-  const typed = $('projectName').value.trim();
-  const fallback = mode === 'objectif'
-    ? `Projet ${fmtInt(parseNum(heroCurrent() || '0'))} m²`
-    : `Projet ${new Date().toLocaleDateString('fr-CH')}`;
-  $('nameModalInput').value = typed || fallback;
-  $('nameModalInput').placeholder = fallback;
-  $('nameModalBackdrop').classList.add('open');
-  setTimeout(()=>{ $('nameModalInput').focus(); $('nameModalInput').select(); }, 50);
-}
-function closeNameModal(){ $('nameModalBackdrop').classList.remove('open'); }
-
-$('finalSaveBtn').addEventListener('click', openNameModal);
-$('nameModalCancel').addEventListener('click', closeNameModal);
-$('nameModalBackdrop').addEventListener('click', (e)=>{ if(e.target.id === 'nameModalBackdrop') closeNameModal(); });
-$('nameModalInput').addEventListener('keydown', (e)=>{ if(e.key === 'Enter') confirmNamedSave(); if(e.key === 'Escape') closeNameModal(); });
-$('nameModalSave').addEventListener('click', confirmNamedSave);
-
-function confirmNamedSave(){
-  const raw = $('nameModalInput').value.trim();
-  const finalName = raw || $('nameModalInput').placeholder;
-  const entry = {
-    id: Date.now(),
-    ts: new Date().toLocaleString('fr-CH', {day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}),
-    label: finalName,
-    state: collectState()
-  };
-  const list = loadHistory();
-  list.unshift(entry);
-  if(list.length > 20) list.length = 20;
-  saveHistoryList(list);
-  $('projectName').value = finalName;   // l'en-tête reflète le nom retenu
-  entry.state.projectName = finalName;
-  saveHistoryList(loadHistory());
-  saveState();
-  closeNameModal();
-  const fbtn = $('finalSaveBtn');
-  const original2 = fbtn.textContent;
-  fbtn.textContent = '✓ "' + finalName + '" enregistré';
-  setTimeout(()=>{ fbtn.textContent = original2; }, 1800);
-}
-
-/* ---------- state persistence (autosave) ---------- */
-const DEFAULTS = {
-  mode:'objectif', montantsLocked:false, coutsLocked:false, finLocked:false, projectName:'',
-  in_terrain:"1'500'000", in_parcelle:"900", in_cc:"4'000", in_pv:"16'000", in_duree:"3.0", in_surface:"300", in_logsize:"100",
-  sl_cible:12, sl_fraisacq:4, sl_imprev:5, sl_comm:4, sl_tva:8.1, sl_is:14.7, sl_credit:80, sl_taux:3, sl_util:50, sl_coef:0.8
-};
-
-function applyState(state){
-  mode = state.mode || 'objectif';
-  $('projectName').value = state.projectName || '';
-  montantsLocked = !!state.montantsLocked;
-  // rétrocompatibilité : anciens projets enregistrés avec un seul verrou "tauxLocked"
-  coutsLocked = state.coutsLocked !== undefined ? !!state.coutsLocked : !!state.tauxLocked;
-  finLocked = state.finLocked !== undefined ? !!state.finLocked : !!state.tauxLocked;
-  applyModeUI();
-  numInputs.forEach(id=>{ if(state[id] !== undefined) $(id).value = state[id]; });
-  Object.entries(sliders).forEach(([key,id])=>{
-    if(state[id] !== undefined){
-      $(id).value = state[id];
-      $('val_'+key).textContent = key === 'coef'
-        ? parseFloat(state[id]).toFixed(2)
-        : parseFloat(state[id]).toFixed(1)+'%';
-    }
-  });
-  applyLockUI();
-}
-
-function saveState(){
-  const json = JSON.stringify(collectState());
-  try{ localStorage.setItem(STORAGE_KEY, json); }
-  catch(e){ memoryFallback = json; }
-}
-
-function loadState(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  if(memoryFallback) return JSON.parse(memoryFallback);
-  return null;
-}
-
-$('resetBtn').addEventListener('click', ()=>{
-  applyState(DEFAULTS);
-  try{ localStorage.removeItem(STORAGE_KEY); }catch(e){}
-  memoryFallback = null;
-  compute();
-});
-
-
-/* --- chiffre principal : rouleaux type machine à sous ---
-   Chaque chiffre est une cellule à débordement masqué contenant une bande 0-9
-   répétée. On part d'une répétition basse et on remonte la bande vers la position
-   finale : visuellement les chiffres défilent de haut en bas, puis se calent
-   l'un après l'autre (décalage par colonne). */
-const OD_REPEATS = 4;                 // longueur de course de la bande
-const OD_EASE = 'cubic-bezier(.16,.84,.28,1)';
-const OD_HERO = { dur:780, stagger:75 };   // grand chiffre
-const OD_PEEK = { dur:520, stagger:32 };   // bandeau replié, plus discret
-
-let heroInstant = false;              // vrai pendant un changement de mode
-let heroDragging = false;             // vrai pendant un glissement
-
-function buildStrip(){
-  const strip = document.createElement('span');
-  strip.className = 'od-strip';
-  for(let r=0; r<OD_REPEATS; r++){
-    for(let d=0; d<10; d++){
-      const s = document.createElement('span');
-      s.className = 'od-digit';
-      s.textContent = d;
-      strip.appendChild(s);
-    }
-  }
-  return strip;
-}
-
-function sameShape(a, b){
-  if(a === null || a === undefined || a.length !== b.length) return false;
-  for(let i=0;i<a.length;i++){
-    const da = a[i] >= '0' && a[i] <= '9';
-    const db = b[i] >= '0' && b[i] <= '9';
-    if(da !== db) return false;
-    if(!da && a[i] !== b[i]) return false;
-  }
-  return true;
-}
-
-/* Rouleau générique : utilisable sur n'importe quel élément.
-   L'état courant est porté par l'élément lui-même (dataset.rollStr). */
-function rollLayout(el, str){
-  el.innerHTML = '';
-  for(const ch of str){
-    if(ch >= '0' && ch <= '9'){
-      const cell = document.createElement('span');
-      cell.className = 'od-cell';
-      cell.appendChild(buildStrip());
-      el.appendChild(cell);
-    } else {
-      const sep = document.createElement('span');
-      sep.className = 'od-sep';
-      sep.textContent = ch;
-      el.appendChild(sep);
-    }
-  }
-}
-
-function rollPaint(el, str, animate, cfg){
-  cfg = cfg || OD_HERO;
-  const prev = el.dataset.rollStr;
-  if(!sameShape(prev, str)) rollLayout(el, str);
-
-  const cells = el.querySelectorAll('.od-cell');
-  let ci = 0;
-  for(const ch of str){
-    if(ch < '0' || ch > '9') continue;
-    const d = +ch;
-    const strip = cells[ci].firstChild;
-    const target = `translateY(-${d}em)`;
-    if(animate){
-      const from = (OD_REPEATS-1)*10 + d;
-      strip.style.transition = 'none';
-      strip.style.transform = `translateY(-${from}em)`;
-      void strip.offsetHeight;                       // fige la position de départ
-      strip.style.transition = `transform ${cfg.dur}ms ${OD_EASE} ${ci*cfg.stagger}ms`;
-      strip.style.transform = target;
-    } else {
-      strip.style.transition = 'none';
-      strip.style.transform = target;
-    }
-    ci++;
-  }
-  el.dataset.rollStr = str;
-}
-
-function rollClear(el){
-  el.innerHTML = '—';
-  delete el.dataset.rollStr;
-}
-
-/* --- valeurs en attente : le grand chiffre et le bandeau roulent ensemble --- */
-let pendingHero = null, pendingPeek = null, rollTimer = null;
-function heroCurrent(){ return $('heroValue').dataset.rollStr || null; }
-
-function flushRolls(){
-  if(rollTimer){ clearTimeout(rollTimer); rollTimer = null; }
-  if(pendingHero !== null && pendingHero !== heroCurrent()){
-    rollPaint($('heroValue'), pendingHero, true, OD_HERO);
-  }
-  if(pendingPeek){
-    if(pendingPeek.rn   !== $('peek_rn').dataset.rollStr)   rollPaint($('peek_rn'),   pendingPeek.rn,   true, OD_PEEK);
-    if(pendingPeek.rann !== $('peek_rann').dataset.rollStr) rollPaint($('peek_rann'), pendingPeek.rann, true, OD_PEEK);
-  }
-  pendingHero = null; pendingPeek = null;
-}
-function scheduleRolls(){
-  if(rollTimer) clearTimeout(rollTimer);
-  rollTimer = setTimeout(flushRolls, 140);
-}
-
-function setPeekNumbers(rnStr, rannStr){
-  if(heroInstant){
-    rollPaint($('peek_rn'), rnStr, false, OD_PEEK);
-    rollPaint($('peek_rann'), rannStr, false, OD_PEEK);
-    pendingPeek = null;
-    return;
-  }
-  if(rnStr === $('peek_rn').dataset.rollStr && rannStr === $('peek_rann').dataset.rollStr){
-    pendingPeek = null; return;
-  }
-  pendingPeek = { rn:rnStr, rann:rannStr };
-  scheduleRolls();
-}
-
-function clearPeekNumbers(){
-  pendingPeek = null;
-  rollClear($('peek_rn')); rollClear($('peek_rann'));
-}
-
-function setHeroNumber(target, formatter){
-  const el = $('heroValue');
-  if(target === null || !isFinite(target)){
-    if(rollTimer){ clearTimeout(rollTimer); rollTimer = null; }
-    pendingHero = null;
-    rollClear(el);
-    return;
-  }
-  const str = formatter(target);
-
-  if(heroInstant){                     // changement de mode : bascule sèche
-    if(rollTimer){ clearTimeout(rollTimer); rollTimer = null; }
-    pendingHero = null;
-    rollPaint(el, str, false, OD_HERO);
-    return;
-  }
-  if(str === heroCurrent()){ pendingHero = null; return; }
-
-  // Le chiffre ne change jamais sans son roulement : on retient la nouvelle
-  // valeur et on la joue dès que la saisie se stabilise.
-  pendingHero = str;
-  scheduleRolls();
-}
-
-document.addEventListener('pointerdown', e=>{
-  if(e.target.matches('input[type=range]') || e.target.closest('.field')) heroDragging = true;
-}, true);
-function endHeroDrag(){
-  if(!heroDragging) return;
-  heroDragging = false;
-  flushRolls();
-}
-document.addEventListener('pointerup', endHeroDrag, true);
-document.addEventListener('pointercancel', endHeroDrag, true);
-
-/* recalage des bandes après le changement d'échelle du rectangle */
-document.addEventListener('transitionend', e=>{
-  if(e.target.classList && e.target.classList.contains('hero-value') && e.propertyName === 'font-size'){
-    const s = heroCurrent();
-    if(s) rollPaint($('heroValue'), s, false, OD_HERO);
-  }
-}, true);
-
-/* --- positionne les repères de valeurs usuelles sur les pistes --- */
-function layoutUsualBands(){
-  document.querySelectorAll('.usual-band').forEach(band=>{
-    const input = $(band.dataset.for);
-    if(!input) return;
-    const min = parseFloat(input.min), max = parseFloat(input.max);
-    const umin = parseFloat(band.dataset.umin), umax = parseFloat(band.dataset.umax);
-    const span = max - min;
-    if(!(span > 0)) return;
-    let left = (umin-min)/span*100;
-    let width = (umax-umin)/span*100;
-    if(width < 1.2){ left -= (1.2-width)/2; width = 1.2; }   // repère ponctuel visible
-    band.style.left = Math.max(0, left) + '%';
-    band.style.width = Math.min(100, width) + '%';
-    band.title = `Valeurs usuelles : ${umin}–${umax}`;
-  });
-}
-
-/* ---------- core calculation ---------- */
-
-// TRI par bissection sur les flux semestriels
 function irrSemi(flows){
-  const npv = r => flows.reduce((s,f,i)=> s + f/Math.pow(1+r,i), 0);
-  let lo = -0.999, hi = 5;
-  let nlo = npv(lo), nhi = npv(hi);
+  const npv = r => flows.reduce((s,f,i) => s + f/Math.pow(1+r,i), 0);
+  let lo = -0.999, hi = 5, nlo = npv(lo), nhi = npv(hi);
   if(!isFinite(nlo) || !isFinite(nhi) || nlo*nhi > 0) return NaN;
   for(let k=0;k<200;k++){
     const mid = (lo+hi)/2, nm = npv(mid);
@@ -1669,623 +868,1110 @@ function irrSemi(flows){
   return (lo+hi)/2;
 }
 
-// Coefficients par m² à partir des paramètres saisis
-function mkParams(o){
+/* v : valeurs brutes (terrain en CHF, taux en fraction) */
+function params(v){
   return {
-    A: o.cc*(1+o.tva)*(1+o.imprev),                 // construction incl. TVA + imprévus
-    TAXE_M2: Math.min(47, 0.025*o.cc*(1+o.tva)),    // taxe d'équipement GE, plafond 2.5%
-    tAcq: o.terrain*(1+o.fraisAcq),
-    pv:o.pv, credit:o.credit, taux:o.taux, util:o.util,
-    duree:o.duree, is:o.is, commRate:o.commRate
+    A: v.cc*(1+v.tva)*(1+v.imprev),               // construction / m², TVA et imprévus compris
+    T: Math.min(TAXE_TAUX, TAXE_PLAF*v.cc*(1+v.tva)),
+    land: v.terrain*(1+v.fraisacq),
+    pv:v.pv, credit:v.credit, taux:v.taux, util:v.util,
+    duree:v.duree, is:v.is, comm:v.comm
   };
 }
 
-// Bilan complet + flux de fonds propres semestriels
 function metrics(S, p){
-  const n = Math.max(1, Math.round(p.duree*2));
-  const ccons = S*p.A;
-  const taxe  = S*p.TAXE_M2;
-  const cterr = p.tAcq;
-  const ctot  = ccons + taxe + cterr;
-  const fin   = ccons*p.credit;
-  const apport= ctot - fin;
-  const inter = fin*p.taux*p.duree*p.util;
+  const n     = Math.max(1, Math.round(p.duree*2));
+  const cons  = S*p.A;
+  const taxe  = S*p.T;
+  const land  = p.land;
+  const total = cons + taxe + land;
+  const debt  = cons*p.credit;
+  const eq    = total - debt;
+  const inter = debt*p.taux*p.duree*p.util;
   const ca    = S*p.pv;
-  const comm  = ca*p.commRate;
-  const rai   = ca - ctot - inter - comm;
-  const impot = Math.max(rai,0)*p.is;
-  const rn    = rai - impot;
+  const comm  = ca*p.comm;
+  const pre   = ca - total - inter - comm;
+  const tax   = Math.max(pre,0)*p.is;
+  const net   = pre - tax;
 
-  // terrain + taxe au départ, fonds propres de construction étalés, vente en fin
+  // flux de fonds propres : terrain+taxe au départ, construction étalée, vente à la fin
   const flows = new Array(n+1).fill(0);
-  flows[0] = -(cterr + taxe);
-  const perSem = ccons*(1-p.credit)/n;
-  for(let k=1;k<=n;k++) flows[k] -= perSem;
-  flows[n] += ca - comm - fin - inter - impot;
+  flows[0] = -(land + taxe);
+  const per = cons*(1-p.credit)/n;
+  for(let k=1;k<=n;k++) flows[k] -= per;
+  flows[n] += ca - comm - debt - inter - tax;
 
-  const iSemi = irrSemi(flows);
-  const rann = isFinite(iSemi) ? Math.pow(1+iSemi,2) - 1 : NaN;
-  return {ccons,taxe,cterr,ctot,fin,apport,inter,ca,comm,rai,impot,rn,rann};
+  const i = irrSemi(flows);
+  return {
+    cons, taxe, land, total, debt, eq, inter, ca, comm, pre, tax, net,
+    tri: isFinite(i) ? Math.pow(1+i,2)-1 : NaN,
+    check: flows.reduce((a,b)=>a+b,0) - net       // contrôle de bouclage : doit valoir 0
+  };
 }
 
-// Surface nécessaire pour atteindre la cible
 function solveSurface(target, p){
-  const f = S => { const m = metrics(S,p); return isFinite(m.rann) ? m.rann - target : -1; };
-  let lo = 0.01, hi = 1e6;
+  const f = S => { const m = metrics(S,p); return isFinite(m.tri) ? m.tri-target : -1; };
+  let lo = .01, hi = 1e6;
   if(f(hi) < 0) return NaN;
-  for(let k=0;k<160;k++){
-    const mid=(lo+hi)/2;
-    if(f(mid) < 0) lo=mid; else hi=mid;
-  }
+  for(let k=0;k<160;k++){ const mid=(lo+hi)/2; if(f(mid) < 0) lo=mid; else hi=mid; }
   return hi;
 }
 
-// Prix max du terrain pour atteindre la cible à surface donnée
-function solveTerrain(target, S, o){
-  const f = T => {
-    const m = metrics(S, mkParams(Object.assign({}, o, {terrain:T})));
-    return isFinite(m.rann) ? m.rann - target : -1;
-  };
+/* renvoie le prix d'achat du terrain, hors frais d'acquisition */
+function solveTerrain(target, S, v){
+  const f = T => { const m = metrics(S, params({...v, terrain:T})); return isFinite(m.tri) ? m.tri-target : -1; };
   if(f(0) < 0) return NaN;
   let lo = 0, hi = 1e9;
-  for(let k=0;k<160;k++){
-    const mid=(lo+hi)/2;
-    if(f(mid) > 0) lo=mid; else hi=mid;
-  }
+  for(let k=0;k<160;k++){ const mid=(lo+hi)/2; if(f(mid) > 0) lo=mid; else hi=mid; }
   return lo;
 }
 
+/* Résolution complète pour un état donné. Aucun accès au DOM :
+   sert au rendu comme au recalcul des projets classés. */
+function project(st){
+  const v = {
+    terrain:st.terrain, cc:st.cc, pv:st.pv, duree:Math.max(st.duree,.5),
+    tva:st.tva/100, fraisacq:st.fraisacq/100, is:st.is/100,
+    credit:st.credit/100, taux:st.taux/100, util:st.util/100,
+    imprev:st.imprev/100, comm:st.comm/100
+  };
+  const target  = st.cible/100;
+  const maxArea = st.parcelle*st.ius;
+  let p = params(v), S = null, land = null;
 
-function updateGauge(S, surfaceMax){
-  const row = $('gaugeRow');
-  if(!(surfaceMax > 0) || !(S > 0)){
-    row.style.display = 'none';
-    return;
+  if(st.mode === 'objectif'){
+    const x = solveSurface(target, p);
+    if(!isFinite(x)) return { ok:false, why:'Objectif inatteignable avec ces hypothèses', maxArea };
+    S = Math.ceil(x);
+    if(st.parcelle > 0 && S > maxArea)
+      return { ok:false, why:`Dépasse la surface constructible (max ${fmtInt(maxArea)} m²)`, S, maxArea };
+  } else {
+    S = Math.max(st.surface, 0);
+    if(S <= 0) return { ok:false, why:'Indique une surface > 0', maxArea };
+    if(st.parcelle > 0 && S > maxArea)
+      return { ok:false, why:`Surface > constructible max (${fmtInt(maxArea)} m²)`, S, maxArea };
+    if(st.mode === 'terrain'){
+      land = solveTerrain(target, S, v);
+      if(!isFinite(land) || land <= 0)
+        return { ok:false, why:'Cible inatteignable même avec un terrain gratuit', S, maxArea };
+      p = params({...v, terrain:land});
+    }
   }
-  row.style.display = '';
-  const ratio = S/surfaceMax;
-  const over = ratio > 1;
-  $('gaugeFill').style.width = Math.min(100, ratio*100).toFixed(1) + '%';
-  $('gaugeFill').classList.toggle('over', over);
-  $('gaugeLabel').textContent = `${fmtInt(S)} m² sur ${fmtInt(surfaceMax)} m² possibles`;
-  $('gaugePct').textContent = (ratio*100).toFixed(0) + '%';
-  $('gaugePct').style.color = over ? 'var(--coral)' : '';
+
+  const m = metrics(S, p);
+  return {
+    ok:true, S, m, maxArea, land, target,
+    marge: m.ca > 0 ? m.net/m.ca : NaN,
+    poids: m.total > 0 ? m.land/m.total : NaN,
+    partFP: m.total > 0 ? m.eq/m.total : NaN,
+    lots: Math.max(1, Math.round(S/Math.max(st.logsize,1)))
+  };
 }
 
-function compute(){
-  const raw = {
-    terrain: parseNum($('in_terrain').value),
-    cc: parseNum($('in_cc').value),
-    pv: parseNum($('in_pv').value),
-    duree: Math.max(parseNum($('in_duree').value), 0.5),
-    tva: parseFloat($('sl_tva').value)/100,
-    fraisAcq: parseFloat($('sl_fraisacq').value)/100,
-    is: parseFloat($('sl_is').value)/100,
-    credit: parseFloat($('sl_credit').value)/100,
-    taux: parseFloat($('sl_taux').value)/100,
-    util: parseFloat($('sl_util').value)/100,
-    imprev: parseFloat($('sl_imprev').value)/100,
-    commRate: parseFloat($('sl_comm').value)/100
-  };
-  const cible = parseFloat($('sl_cible').value)/100;
-  const coef = parseFloat($('sl_coef').value);
-  const parcelle = parseNum($('in_parcelle').value);
-  const logsize = Math.max(parseNum($('in_logsize').value), 1);
-  const surfaceMax = parcelle * coef;
-  $('maxBuildablePill').textContent = parcelle > 0 ? (fmtInt(surfaceMax) + ' m²') : '— m²';
+/* ==========================================================================
+   [JS-3] REGISTRE DES CHAMPS
+   Chaque paramètre est décrit une seule fois : valeur par défaut, format,
+   fourchette usuelle, pas de glissement, groupe de verrouillage, aide.
+   Ajouter un paramètre = ajouter une entrée ici.
+   ========================================================================== */
+const FIELDS = [
+  { key:'cible', kind:'slider', sec:'objectif', def:12, min:4, max:30, step:.5, usual:[12,20], modes:['objectif','terrain'],
+    label:'Rendement annuel cible', fmt:'pct',
+    help:"Rendement annualisé sur fonds propres que tu vises (TRI). C'est lui qui pilote tout le calcul." },
 
-  let p = mkParams(raw);
-  const hero = $('hero'), heroBadge = $('heroBadge'), heroBadgeText = $('heroBadgeText');
-  const heroValue = $('heroValue'), heroUnit = $('heroUnit'), heroLabel = $('heroLabel');
+  { key:'terrain', kind:'num', sec:'montants', def:1500000, suffix:'CHF', scrub:2500,
+    label:'Terrain', note:"Prix d'achat",
+    help:"Prix d'achat du terrain, avant les frais d'acquisition (notaire, droits de mutation, RF)." },
+  { key:'parcelle', kind:'num', sec:'montants', def:900, suffix:'m²', scrub:2,
+    label:'Surface de la parcelle', note:'Cadastre',
+    help:'Surface totale du terrain, base du calcul de la surface constructible max.' },
+  { key:'ius', kind:'slider', sec:'montants', def:.8, min:.1, max:3, step:.05, usual:[.6,1.2], fmt:'ratio',
+    label:"Indice d'utilisation du sol (IUS)",
+    help:"Ratio SBP totale / surface de parcelle, tous étages confondus — peut dépasser 1. À ne pas confondre avec le coefficient d'emprise au sol, qui ne limite que l'empreinte du rez." },
+  { key:'maxArea', kind:'readout', sec:'montants',
+    label:'Surface constructible max', note:'Calculé automatiquement',
+    help:"Parcelle × IUS. Au-delà, le projet n'est pas réalisable sur ce terrain." },
+  { key:'gauge', kind:'gauge', sec:'montants' },
+  { key:'cc', kind:'num', sec:'montants', def:4000, suffix:'/m²', scrub:10,
+    label:'Coût de construction', note:'Par m² SBP',
+    help:'Coût par m² de surface brute de plancher, hors terrain et hors TVA. Convention attendue : CFC 2 complet, honoraires compris.' },
+  { key:'pv', kind:'num', sec:'montants', def:16000, suffix:'/m²', scrub:25,
+    label:'Prix de vente', note:'Par m² SBP',
+    help:'Prix de vente par m² SBP, moyenne tous lots confondus.' },
+  { key:'duree', kind:'num', sec:'montants', def:3, suffix:'ans', scrub:.02, half:true,
+    label:'Durée du projet', note:'Par semestre (0.5)',
+    help:'Durée totale entre l\'achat du terrain et la vente du dernier lot. Pas de 0.5 an — ex. 2.5 pour 30 mois.' },
+  { key:'logsize', kind:'num', sec:'montants', def:100, suffix:'m²', scrub:.5,
+    label:'Surface moyenne / logement', note:'Pour estimer le nb de lots',
+    help:'Sert à estimer le nombre de logements, utile pour raisonner la prévente en nombre de lots.' },
+  { key:'surface', kind:'num', sec:'montants', def:300, suffix:'m²', scrub:2, withMax:true, modes:['surface','terrain'],
+    label:'Surface à construire', note:'SBP du projet',
+    help:'Surface que tu prévois de construire. Le bouton « max » reprend la surface constructible maximale (parcelle × IUS).' },
 
-  let S = null, impossible = false, reason = '', terrainMax = null;
+  { key:'fraisacq', kind:'slider', sec:'couts', def:4, min:0, max:8, step:.1, usual:[3.5,4.5],
+    label:"Frais d'acquisition terrain", fmt:'pct',
+    help:'Droits de mutation, notaire, registre foncier — environ 4% au total à Genève.' },
+  { key:'imprev', kind:'slider', sec:'couts', def:5, min:0, max:10, step:.5, usual:[5,8],
+    label:'Imprévus de chantier', fmt:'pct',
+    help:'Coussin de sécurité ajouté au coût de construction. Un dépassement de 5 à 8% est courant.' },
+  { key:'comm', kind:'slider', sec:'couts', def:4, min:0, max:10, step:.5, usual:[3,5],
+    label:'Frais de commercialisation', fmt:'pct',
+    help:'Courtage et frais de vente, en % du chiffre d\'affaires. Typiquement 3 à 5% à Genève.' },
+  { key:'tva', kind:'slider', sec:'couts', def:8.1, min:0, max:12, step:.1, usual:[8.1,8.1],
+    label:'TVA construction', fmt:'pct',
+    help:'Taux légal suisse — 8.1% depuis le 01.01.2024.' },
+  { key:'is', kind:'slider', sec:'couts', def:14.7, min:0, max:30, step:.1, usual:[14,15],
+    label:'Impôt sur le bénéfice (IS)', fmt:'pct',
+    help:'Taux effectif d\'impôt sur le bénéfice de la société — environ 14.7% à Genève en 2024.' },
 
-  if(mode === 'objectif'){
-    heroLabel.textContent = 'Surface nécessaire';
-    heroUnit.textContent = 'm² SBP';
+  { key:'credit', kind:'slider', sec:'banque', def:80, min:0, max:100, step:5, usual:[70,80],
+    label:'Crédit bancaire construction', fmt:'pct',
+    help:'Part du coût de construction financée par la banque. Le solde, plus tout le terrain, reste en fonds propres.' },
+  { key:'taux', kind:'slider', sec:'banque', def:3, min:0, max:8, step:.1, usual:[2.5,3.5],
+    label:"Taux d'intérêt du crédit", fmt:'pct',
+    help:'Taux annuel appliqué au crédit de construction pendant le chantier.' },
+  { key:'util', kind:'slider', sec:'banque', def:50, min:0, max:100, step:5, usual:[45,55],
+    label:'Utilisation moyenne du crédit', fmt:'pct',
+    help:'Solde moyen réellement emprunté pendant le chantier, en % du plafond : le crédit est tiré progressivement, pas d\'un coup.' },
+];
 
-    const exact = solveSurface(cible, p);
-    if(!isFinite(exact)){
-      impossible = true; reason = 'Objectif inatteignable avec ces hypothèses';
-    } else {
-      S = Math.ceil(exact);
-      if(parcelle > 0 && S > surfaceMax){
-        impossible = true;
-        reason = `Dépasse la surface constructible (max ${fmtInt(surfaceMax)} m²)`;
-      } else {
-        setHeroNumber(S, v => fmtInt(v));
-        heroBadge.classList.remove('warn'); hero.classList.remove('warn');
-        heroBadgeText.textContent = 'objectif atteignable';
-      }
-    }
-  } else if(mode === 'surface'){
-    heroLabel.textContent = 'Rendement annualisé (TRI)';
-    heroUnit.textContent = '/an';
+const BY_KEY = Object.fromEntries(FIELDS.map(f => [f.key, f]));
 
-    S = Math.max(parseNum($('in_surface').value), 0);
-    if(S <= 0){ impossible = true; reason = 'Indique une surface > 0'; }
-    else if(parcelle > 0 && S > surfaceMax){
-      impossible = true;
-      reason = `Surface > constructible max (${fmtInt(surfaceMax)} m²)`;
-    }
-  } else { // mode terrain
-    heroLabel.textContent = 'Prix max du terrain';
-    heroUnit.textContent = 'CHF';
+/* Sections : titre, page, groupe de verrouillage.
+   'objectif' n'a pas de verrou : c'est une cible, pas un paramètre du projet. */
+const SECTIONS = [
+  { id:'objectif', page:0, title:'Objectif',             hint:'ce que tu vises', lock:null },
+  { id:'montants', page:0, title:'Montants',             hint:'CHF',             lock:'montants' },
+  { id:'couts',    page:1, title:'Coûts & fiscalité',    hint:'glisser',         lock:'couts' },
+  { id:'banque',   page:2, title:'Financement bancaire', hint:'glisser',         lock:'banque' },
+];
+const PAGES = ['Montants','Coûts','Banque'];
 
-    S = Math.max(parseNum($('in_surface').value), 0);
-    if(S <= 0){ impossible = true; reason = 'Indique une surface > 0'; }
-    else if(parcelle > 0 && S > surfaceMax){
-      impossible = true;
-      reason = `Surface > constructible max (${fmtInt(surfaceMax)} m²)`;
-    } else {
-      terrainMax = solveTerrain(cible, S, raw);
-      if(!isFinite(terrainMax) || terrainMax <= 0){
-        impossible = true;
-        reason = 'Cible inatteignable même avec un terrain gratuit';
-      } else {
-        setHeroNumber(terrainMax, v => fmtInt(v));
-        heroBadge.classList.remove('warn'); hero.classList.remove('warn');
-        heroBadgeText.textContent = `pour ${fmtPct(cible)}/an sur ${fmtInt(S)} m²`;
-        // recalcule le bilan avec ce prix de terrain
-        p = mkParams(Object.assign({}, raw, {terrain: terrainMax}));
-      }
+const LIMITS = [
+  { t:'purpose', v:"Cet outil donne rapidement une vision financière d'un projet immobilier, à partir de paramètres que tu encodes toi-même : prix du terrain, coût de construction, prix de vente, durée, conditions bancaires et fiscalité." },
+  { t:'purpose', v:"Il répond à trois questions, une par mode. <b>Surface</b> : quelle surface faut-il construire pour atteindre le rendement visé. <b>Terrain</b> : quel prix ne pas dépasser à l'achat du terrain. <b>Rendement</b> : quel rendement espérer avec une surface donnée." },
+  { t:'purpose', v:"C'est un outil de dégrossissage, fait pour comparer des hypothèses en quelques secondes et écarter tôt les opérations qui ne tiennent pas — pas pour remplacer un plan financier détaillé au moment de monter le dossier." },
+
+  { t:'limit', v:"Intérêts = crédit mobilisé × taux × durée × utilisation moyenne : tirage progressif approximé, sans courbe de décaissement réelle." },
+  { t:'limit', v:"TVA ajoutée au coût de construction, non récupérée." },
+  { t:'limit', v:"Taxe d'équipement genevoise : 47 CHF/m² SBP, plafonnée à 2.5% du coût de construction." },
+  { t:'limit', v:"Imprévus appliqués au coût de construction ; frais de commercialisation déduits du chiffre d'affaires." },
+  { t:'limit', v:"Impôt personnel du promoteur (IBGI si personne physique) non calculé — seulement l'IS société." },
+  { t:'limit', v:"Terrain payé 100% fonds propres ; seule la construction est financée par la banque." },
+  { t:'limit', v:"Aucun aléa de chantier, retard ou taux de prévente modélisé." },
+];
+
+/* ==========================================================================
+   [JS-4] ÉTAT
+   ========================================================================== */
+function defaults(){
+  const s = { mode:'objectif', project:'', locks:{ montants:false, couts:false, banque:false } };
+  FIELDS.forEach(f => { if(f.def !== undefined) s[f.key] = f.def; });
+  return s;
+}
+let S = defaults();
+
+function saveState(){ Store.set(K_STATE, JSON.stringify(S)); }
+function loadState(){
+  try{
+    const raw = Store.get(K_STATE);
+    if(!raw) return null;
+    const o = JSON.parse(raw);
+    const s = defaults();
+    Object.keys(s).forEach(k => { if(o[k] !== undefined) s[k] = o[k]; });
+    s.locks = Object.assign(defaults().locks, o.locks || {});
+    return s;
+  }catch(e){ return null; }
+}
+
+/* ==========================================================================
+   [JS-5] ROULEAUX
+   Un composant unique, réutilisé par le grand chiffre et par le bandeau.
+   L'état courant est porté par l'élément (dataset.roll).
+   ========================================================================== */
+const ROLL_REPEATS = 4;
+const ROLL_EASE = 'cubic-bezier(.16,.84,.28,1)';
+const ROLL_BIG   = { dur:780, stagger:75 };
+const ROLL_SMALL = { dur:520, stagger:32 };
+
+function rollStrip(){
+  const s = el('span','roll-strip');
+  for(let r=0;r<ROLL_REPEATS;r++)
+    for(let d=0;d<10;d++) s.appendChild(el('span','roll-digit', String(d)));
+  return s;
+}
+function sameShape(a,b){
+  if(a == null || a.length !== b.length) return false;
+  for(let i=0;i<a.length;i++){
+    const da = a[i] >= '0' && a[i] <= '9', db = b[i] >= '0' && b[i] <= '9';
+    if(da !== db) return false;
+    if(!da && a[i] !== b[i]) return false;
+  }
+  return true;
+}
+function rollPaint(node, str, animate, cfg = ROLL_BIG){
+  if(!sameShape(node.dataset.roll, str)){
+    node.innerHTML = '';
+    for(const ch of str){
+      if(ch >= '0' && ch <= '9'){ const c = el('span','roll-cell'); c.appendChild(rollStrip()); node.appendChild(c); }
+      else node.appendChild(el('span','roll-sep', ch));
     }
   }
+  const cells = node.querySelectorAll('.roll-cell');
+  let i = 0;
+  for(const ch of str){
+    if(ch < '0' || ch > '9') continue;
+    const strip = cells[i].firstChild, d = +ch;
+    if(animate){
+      strip.style.transition = 'none';
+      strip.style.transform = `translateY(-${(ROLL_REPEATS-1)*10 + d}em)`;
+      void strip.offsetHeight;
+      strip.style.transition = `transform ${cfg.dur}ms ${ROLL_EASE} ${i*cfg.stagger}ms`;
+    } else {
+      strip.style.transition = 'none';
+    }
+    strip.style.transform = `translateY(-${d}em)`;
+    i++;
+  }
+  node.dataset.roll = str;
+}
+function rollClear(node){ node.textContent = '—'; delete node.dataset.roll; }
 
-  const BLANK = ['v_ccons','v_taxe','v_cterr','v_ctot','v_fin','v_apport','v_int','v_ca','v_comm','v_impot','v_rn','v_rann','v_nblog','v_marge','v_poids'];
+/* Les trois chiffres roulent ensemble. Une valeur ne s'affiche jamais sans
+   son roulement : elle est mise en attente puis jouée quand la saisie se pose. */
+const Roll = (() => {
+  let pending = null, timer = null, dragging = false, instant = false;
+  function flush(){
+    if(timer){ clearTimeout(timer); timer = null; }
+    if(!pending) return;
+    const p = pending; pending = null;
+    if(p.hero !== $('heroVal').dataset.roll) rollPaint($('heroVal'), p.hero, true, ROLL_BIG);
+    if(p.net  !== $('peekNet').dataset.roll) rollPaint($('peekNet'), p.net,  true, ROLL_SMALL);
+    if(p.tri  !== $('peekTri').dataset.roll) rollPaint($('peekTri'), p.tri,  true, ROLL_SMALL);
+  }
+  return {
+    setDragging(v){ dragging = v; if(!v) flush(); },
+    setInstant(v){ instant = v; },
+    clear(){ if(timer) clearTimeout(timer); timer = null; pending = null;
+             rollClear($('heroVal')); rollClear($('peekNet')); rollClear($('peekTri')); },
+    show(hero, net, tri){
+      if(instant){
+        if(timer) clearTimeout(timer);
+        timer = null; pending = null;
+        rollPaint($('heroVal'), hero, false, ROLL_BIG);
+        rollPaint($('peekNet'), net,  false, ROLL_SMALL);
+        rollPaint($('peekTri'), tri,  false, ROLL_SMALL);
+        return;
+      }
+      if(hero === $('heroVal').dataset.roll && net === $('peekNet').dataset.roll && tri === $('peekTri').dataset.roll){
+        pending = null; if(timer){ clearTimeout(timer); timer = null; } return;
+      }
+      pending = { hero, net, tri };
+      if(timer) clearTimeout(timer);
+      timer = setTimeout(flush, 140);
+    },
+    repaintHero(){ const s = $('heroVal').dataset.roll; if(s) rollPaint($('heroVal'), s, false, ROLL_BIG); }
+  };
+})();
 
-  if(impossible){
-    setHeroNumber(null);
-    heroBadge.classList.add('warn'); hero.classList.add('warn');
-    heroBadgeText.textContent = reason;
-    BLANK.forEach(id=> $(id).textContent='—');
-    $('verifSurf').textContent = '— m²';
-    updateGauge(S, surfaceMax);
-    $('alertBox').classList.remove('show');
-    syncAlertHeight();
-    clearPeekNumbers();
-    renderWaterfall({ccons:0,cterr:0,taxe:0,inter:0,comm:0,impot:0,rn:0});
-    renderDiagnostic({rann:NaN}, {marge:NaN, poids:NaN, partFP:NaN, ccM2:raw.cc, pv:raw.pv});
+/* ==========================================================================
+   [JS-6] CONSTRUCTION DES PAGES depuis le registre
+   ========================================================================== */
+function tip(text){
+  const t = el('span','tip'); t.tabIndex = 0;
+  t.appendChild(el('span','tip-ico','?'));
+  t.appendChild(el('span','tip-bubble', text));
+  return t;
+}
+function labelWith(text, help){
+  const l = el('span','f-label', text);
+  if(help) l.appendChild(tip(help));
+  return l;
+}
+
+function buildField(f){
+  if(f.kind === 'gauge'){
+    const w = el('div','f');
+    w.id = 'row-gauge';
+    const head = el('div','gauge-head');
+    head.appendChild(el('span','gauge-label','—')).id = 'gaugeLabel';
+    head.appendChild(el('span','gauge-pct','—')).id = 'gaugePct';
+    const track = el('div','gauge-track');
+    const fill = el('div','gauge-fill'); fill.id = 'gaugeFill';
+    track.appendChild(fill);
+    w.appendChild(head); w.appendChild(track);
+    return w;
+  }
+
+  if(f.kind === 'slider'){
+    const w = el('div','f f-slider');
+    if(f.modes) w.id = `row-${f.key}`;
+    const top = el('div','f-top');
+    top.appendChild(labelWith(f.label, f.help));
+    const val = el('span','f-val'); val.id = `val-${f.key}`;
+    top.appendChild(val);
+    const track = el('div','track');
+    const band = el('span','band'); band.id = `band-${f.key}`;
+    const input = document.createElement('input');
+    input.type = 'range'; input.id = `in-${f.key}`;
+    input.min = f.min; input.max = f.max; input.step = f.step; input.value = f.def;
+    track.appendChild(band); track.appendChild(input);
+    w.appendChild(top); w.appendChild(track);
+    return w;
+  }
+
+  const w = el('div','f');
+  if(f.modes) w.id = `row-${f.key}`;
+  const row = el('div','f-row');
+  const text = el('div','f-text');
+  text.appendChild(labelWith(f.label, f.help));
+  if(f.note) text.appendChild(el('div','f-note', f.note));
+  row.appendChild(text);
+
+  if(f.kind === 'readout'){
+    const p = el('span','pill','— m²'); p.id = `out-${f.key}`;
+    row.appendChild(p);
+  } else {
+    const wrap = el('div', f.withMax ? 'f-ctl' : null);
+    if(f.withMax){
+      wrap.style.cssText = 'display:flex;align-items:center;gap:8px';
+      const b = el('button','max-btn','max'); b.id = 'btnMax'; b.title = 'Utiliser la surface constructible max';
+      wrap.appendChild(b);
+    }
+    const box = el('div','f-box' + (f.scrub ? ' scrub' : ''));
+    box.id = `box-${f.key}`;
+    const input = document.createElement('input');
+    input.type = 'text'; input.id = `in-${f.key}`;
+    input.inputMode = f.half ? 'decimal' : 'numeric';
+    box.appendChild(input);
+    if(f.suffix) box.appendChild(el('span','f-suffix', f.suffix));
+    if(f.withMax){ wrap.appendChild(box); row.appendChild(wrap); }
+    else row.appendChild(box);
+  }
+  w.appendChild(row);
+  return w;
+}
+
+function buildUI(){
+  // pages
+  const pager = $('pager');
+  const pageNodes = PAGES.map((_,i) => {
+    const s = el('section','page'); s.dataset.page = i; pager.appendChild(s); return s;
+  });
+
+  SECTIONS.forEach(sec => {
+    const host = pageNodes[sec.page];
+    const head = el('div','sec'); head.id = `sec-${sec.id}`;
+    head.appendChild(el('span', null, sec.title));
+    const right = el('span','sec-right');
+    if(sec.hint) right.appendChild(el('span','sec-hint', sec.hint));
+    if(sec.lock){
+      const b = el('button','lock-btn','🔓');
+      b.id = `lock-${sec.lock}`; b.title = 'Verrouiller cette section';
+      right.appendChild(b);
+    }
+    head.appendChild(right);
+    host.appendChild(head);
+
+    const card = el('div','card'); card.id = `card-${sec.id}`;
+    FIELDS.filter(f => f.sec === sec.id).forEach(f => card.appendChild(buildField(f)));
+    host.appendChild(card);
+  });
+
+  // cascade : segments créés une fois, seules les largeurs changent ensuite
+  WF.forEach(w => {
+    const seg = el('div','wf-seg'); seg.id = `seg-${w.key}`; seg.title = w.name;
+    $('wfBar').appendChild(seg);
+    const item = el('span','wf-item');
+    const chip = el('span','wf-chip'); chip.id = `chip-${w.key}`;
+    item.appendChild(chip);
+    item.appendChild(el('span','wf-name', w.name));
+    const pct = el('span','wf-pct','—'); pct.id = `pct-${w.key}`;
+    item.appendChild(pct);
+    $('wfLegend').appendChild(item);
+  });
+
+  // diagnostic : lignes créées une fois, seules les valeurs changent
+  DIAG.forEach(d => {
+    const row = el('div','dg');
+    const head = el('div','dg-head');
+    head.appendChild(el('span','dg-name', d.name));
+    const v = el('span','dg-val','—'); v.id = `dgv-${d.key}`;
+    head.appendChild(v);
+    const track = el('div','dg-track');
+    const band = el('span','dg-band');
+    const span = d.max - d.min;
+    band.style.left  = ((d.usual[0]-d.min)/span*100).toFixed(1) + '%';
+    band.style.width = ((d.usual[1]-d.usual[0])/span*100).toFixed(1) + '%';
+    const mark = el('span','dg-mark'); mark.id = `dgm-${d.key}`;
+    track.appendChild(band); track.appendChild(mark);
+    const foot = el('div','dg-foot');
+    const tag = el('span','dg-tag','—'); tag.id = `dgt-${d.key}`;
+    foot.appendChild(tag);
+    foot.appendChild(el('span','dg-note', d.note));
+    row.appendChild(head); row.appendChild(track); row.appendChild(foot);
+    $('diag').appendChild(row);
+  });
+
+  // limites
+  let lastType = null;
+  LIMITS.forEach(item => {
+    if(item.t !== lastType){
+      const h = el('div','f note-head', item.t === 'purpose' ? 'Ce que fait ce modèle' : 'Ce qu\'il simplifie');
+      $('limitsList').appendChild(h);
+      lastType = item.t;
+    }
+    const r = el('div','f');
+    const n = el('div', item.t === 'purpose' ? 'f-note note-strong' : 'f-note');
+    n.innerHTML = item.v;
+    r.appendChild(n);
+    $('limitsList').appendChild(r);
+  });
+
+  // fourchettes usuelles sur les pistes
+  layoutBands();
+}
+
+function layoutBands(){
+  FIELDS.filter(f => f.kind === 'slider').forEach(f => {
+    const band = $(`band-${f.key}`);
+    if(!band) return;
+    const span = f.max - f.min;
+    let left = (f.usual[0]-f.min)/span*100;
+    let width = (f.usual[1]-f.usual[0])/span*100;
+    if(width < 1.2){ left -= (1.2-width)/2; width = 1.2; }   // repère ponctuel visible
+    band.style.left = Math.max(0,left).toFixed(2) + '%';
+    band.style.width = Math.min(100,width).toFixed(2) + '%';
+    band.title = `Valeurs usuelles : ${f.usual[0]}–${f.usual[1]}`;
+  });
+}
+
+/* ==========================================================================
+   [JS-7] CASCADE ET DIAGNOSTIC — définitions
+   ========================================================================== */
+const WF = [
+  { key:'cons',  name:'Construction',       v:'--wf-1', get:m => m.cons },
+  { key:'land',  name:'Terrain',            v:'--wf-2', get:m => m.land },
+  { key:'taxe',  name:'Taxe équipement',    v:'--wf-3', get:m => m.taxe },
+  { key:'inter', name:'Intérêts',           v:'--wf-4', get:m => m.inter },
+  { key:'comm',  name:'Commercialisation',  v:'--wf-5', get:m => m.comm },
+  { key:'tax',   name:'Impôt',              v:'--wf-6', get:m => m.tax },
+  { key:'net',   name:'Résultat net',       v:'--wf-7', get:m => Math.max(0,m.net) },
+];
+
+const DIAG = [
+  { key:'tri',   name:'Rendement (TRI)',     min:0, max:.30, usual:[.12,.20], dir:'high', thr:[.10,.15],
+    get:r => r.m.tri, fmt:v => fmtPct(v)+'/an',
+    note:'Attendu en promotion : 12–20%/an selon le risque.' },
+  { key:'marge', name:'Marge nette',         min:0, max:.30, usual:[.08,.15], dir:'high', thr:[.08,.15],
+    get:r => r.marge, fmt:fmtPct,
+    note:"Sous 8% du CA, un aléa de chantier suffit à effacer la marge." },
+  { key:'poids', name:'Poids du terrain',    min:0, max:.70, usual:[0,.30],   dir:'low',  thr:[.30,.25],
+    get:r => r.poids, fmt:fmtPct,
+    note:'Au-delà de 25–30% du coût total, le foncier absorbe la marge.' },
+  { key:'fp',    name:'Apport / coût total', min:0, max:.60, usual:[.20,.40], dir:'high', thr:[.15,.20],
+    get:r => r.partFP, fmt:fmtPct,
+    note:'Sous 15%, le montage est trop tendu pour la plupart des banques.' },
+  { key:'cc',    name:'Coût de construction', min:2000, max:6500, usual:[3500,4800], dir:'low', thr:[5200,4800],
+    get:(r,st) => st.cc, fmt:v => fmtInt(v)+' CHF/m²',
+    note:'Ordre de grandeur genevois : 3 500–4 800 CHF/m² SBP (CFC 2).' },
+  { key:'pv',    name:'Prix de vente', min:6000, max:24000, usual:[11000,18000], dir:'high', thr:[10000,13000],
+    get:(r,st) => st.pv, fmt:v => fmtInt(v)+' CHF/m²',
+    note:'Fourchette genevoise courante : 11 000–18 000 CHF/m².' },
+];
+const VERDICT = { good:['confortable','good'], ok:['acceptable','warn'], bad:['à surveiller','bad'], none:['—','none'] };
+
+function statusOf(v, dir, thr){
+  if(!isFinite(v)) return 'none';
+  const [lim, good] = thr;
+  if(dir === 'high') return v >= good ? 'good' : (v >= lim ? 'ok' : 'bad');
+  return v <= good ? 'good' : (v <= lim ? 'ok' : 'bad');
+}
+
+/* ==========================================================================
+   [JS-8] RENDU — point d'entrée unique de tout l'affichage
+   ========================================================================== */
+function setText(id, txt){ const n = $(id); if(n) n.textContent = txt; }
+
+function render(){
+  const r = project(S);
+  const heroVal = $('heroVal'), hero = $('hero'), badge = $('heroBadge');
+
+  // libellés dépendant du mode
+  const titles = { objectif:'Surface à construire', terrain:'Prix max du terrain', surface:'Rendement obtenu' };
+  const labels = { objectif:'Surface nécessaire',   terrain:'Prix max du terrain', surface:'Rendement annualisé (TRI)' };
+  const units  = { objectif:'m² SBP',               terrain:'CHF',                 surface:'/an' };
+  setText('pageTitle', titles[S.mode]);
+  setText('heroLabel', labels[S.mode]);
+  setText('heroUnit',  units[S.mode]);
+
+  // surface constructible max + jauge
+  const maxArea = S.parcelle * S.ius;
+  setText('out-maxArea', S.parcelle > 0 ? fmtInt(maxArea) + ' m²' : '— m²');
+  updateGauge(r.S, maxArea);
+
+  if(!r.ok){
+    hero.classList.add('mute'); badge.classList.add('mute');
+    setText('heroBadgeText', r.why);
+    Roll.clear();
+    ['oNet','oTri','oMarge','oLots','oCons','oTaxe','oTerr','oTot','oPoids','oFin','oApport','oInt','oCa','oComm','oImpot']
+      .forEach(id => setText(id,'—'));
+    setText('resSurface','— m²');
+    renderWaterfall(null);
+    renderDiag(null);
     saveState();
     return;
   }
 
-  const m = metrics(S, p);
-  const margeCA = m.ca > 0 ? m.rn/m.ca : NaN;
-  const poids = m.ctot > 0 ? m.cterr/m.ctot : NaN;
-  const partFP = m.ctot > 0 ? m.apport/m.ctot : 1;
+  hero.classList.remove('mute'); badge.classList.remove('mute');
+  const m = r.m;
 
-  if(mode === 'surface'){
-    if(!isFinite(m.rann)){
-      setHeroNumber(null);
-      heroBadge.classList.add('warn'); hero.classList.add('warn');
-      heroBadgeText.textContent = 'Rendement non calculable';
-    } else {
-      setHeroNumber(m.rann*100, v => v.toFixed(1));
-      heroBadge.classList.remove('warn'); hero.classList.remove('warn');
-      heroBadgeText.textContent = `sur ${fmtInt(S)} m² · marge ${fmtPct(margeCA)} du CA`;
-    }
-  }
-
-  // --- alertes de plausibilité ---
-  const alerts = [];
-  if(partFP < 0.15){
-    alerts.push(`Apport de seulement ${fmtPct(partFP)} du coût total : le rendement repose surtout sur l'effet de levier. Peu de banques suivront un montage aussi tendu.`);
-  }
-  if(isFinite(margeCA) && margeCA < 0.08 && margeCA > 0){
-    alerts.push(`Marge nette de ${fmtPct(margeCA)} du CA : faible coussin pour absorber un aléa de chantier ou de marché.`);
-  }
-  if(isFinite(poids) && poids > 0.30){
-    alerts.push(`Le terrain pèse ${fmtPct(poids)} du coût total (repère usuel : 25-30%).`);
-  }
-  if(alerts.length){
-    $('alertText').textContent = alerts.join(' · ');
-    $('alertBox').classList.add('show');
+  // grand chiffre selon le mode
+  let heroStr, badgeTxt;
+  if(S.mode === 'objectif'){
+    heroStr = fmtInt(r.S);
+    badgeTxt = 'objectif atteignable';
+  } else if(S.mode === 'terrain'){
+    heroStr = fmtInt(r.land);
+    badgeTxt = `pour ${fmtPct(r.target)}/an sur ${fmtInt(r.S)} m²`;
   } else {
-    $('alertBox').classList.remove('show');
+    heroStr = (m.tri*100).toFixed(1);
+    badgeTxt = `sur ${fmtInt(r.S)} m² · marge ${fmtPct(r.marge)} du CA`;
   }
-  syncAlertHeight();
+  setText('heroBadgeText', badgeTxt);
+  Roll.show(heroStr, fmtCHF(m.net), isFinite(m.tri) ? fmtPct(m.tri)+'/an' : '—');
 
-  updateGauge(S, surfaceMax);
-  $('verifSurf').textContent = fmtInt(S) + ' m²';
-  $('v_ccons').textContent = fmtCHF(m.ccons);
-  $('v_taxe').textContent = '−' + fmtCHF(m.taxe);
-  $('v_cterr').textContent = fmtCHF(m.cterr);
-  $('v_ctot').textContent = fmtCHF(m.ctot);
-  $('v_fin').textContent = fmtCHF(m.fin);
-  $('v_apport').textContent = fmtCHF(m.apport);
-  $('v_int').textContent = '−' + fmtCHF(m.inter);
-  $('v_ca').textContent = fmtCHF(m.ca);
-  $('v_comm').textContent = '−' + fmtCHF(m.comm);
-  $('v_impot').textContent = '−' + fmtCHF(m.impot);
-  $('v_rn').textContent = fmtCHF(m.rn);
-  $('v_rann').textContent = isFinite(m.rann) ? fmtPct(m.rann) + '/an' : '—';
-  $('v_nblog').textContent = Math.max(1, Math.round(S/logsize)) + ' lots';
-  $('v_marge').textContent = isFinite(margeCA) ? fmtPct(margeCA) : '—';
-  setPeekNumbers(fmtCHF(m.rn), isFinite(m.rann) ? fmtPct(m.rann)+'/an' : '—');
+  // bilan
+  setText('resSurface', fmtInt(r.S) + ' m²');
+  setText('oNet',  fmtCHF(m.net));
+  setText('oTri',  isFinite(m.tri) ? fmtPct(m.tri)+'/an' : '—');
+  setText('oMarge', fmtPct(r.marge));
+  setText('oLots', r.lots + ' lots');
+  setText('oCons', fmtCHF(m.cons));
+  setText('oTaxe', '−' + fmtCHF(m.taxe));
+  setText('oTerr', fmtCHF(m.land));
+  setText('oTot',  fmtCHF(m.total));
+  setText('oPoids', fmtPct(r.poids));
+  setText('oFin',  fmtCHF(m.debt));
+  setText('oApport', fmtCHF(m.eq));
+  setText('oInt',  '−' + fmtCHF(m.inter));
+  setText('oCa',   fmtCHF(m.ca));
+  setText('oComm', '−' + fmtCHF(m.comm));
+  setText('oImpot','−' + fmtCHF(m.tax));
+
   renderWaterfall(m);
-  renderDiagnostic(m, {marge:margeCA, poids, partFP, ccM2:raw.cc, pv:raw.pv});
-  $('v_poids').textContent = isFinite(poids) ? fmtPct(poids) : '—';
+  renderDiag(r);
+
 
   saveState();
 }
 
-
-
-/* --- mesure les hauteurs réelles pour que le panneau ne recouvre pas la nav --- */
-function measureChrome(){
-  const nav = $('pageNav');
-  const peek = $('rsPeek');
-  if(nav) document.documentElement.style.setProperty('--nav-h', nav.offsetHeight + 'px');
-  if(peek) document.documentElement.style.setProperty('--peek-h', peek.offsetHeight + 'px');
+function updateGauge(Sv, maxArea){
+  const row = $('row-gauge');
+  if(!row) return;
+  if(!(maxArea > 0) || !(Sv > 0)){ row.style.display = 'none'; return; }
+  row.style.display = '';
+  const ratio = Sv/maxArea, over = ratio > 1;
+  $('gaugeFill').style.width = Math.min(100, ratio*100).toFixed(1) + '%';
+  $('gaugeFill').classList.toggle('over', over);
+  setText('gaugeLabel', `${fmtInt(Sv)} m² sur ${fmtInt(maxArea)} m² possibles`);
+  setText('gaugePct', (ratio*100).toFixed(0) + '%');
+  $('gaugePct').style.color = over ? 'var(--bad)' : '';
 }
-window.addEventListener('resize', ()=>{ measureChrome(); measureCompactGain(); measureHeroGain(); });
 
-
-/* ================= PANNEAU RÉSULTAT COULISSANT ================= */
-const resultSheet = $('resultSheet');
-const rsPeek = $('rsPeek');
-const rsBody = $('rsBody');
-
-function openResult(){
-  resultSheet.classList.add('open');
-  shell.classList.add('compact');      // rectangle en petit format, comme au défilement
-}
-function closeResult(){
-  resultSheet.classList.remove('open');
-  updateCompact();                     // reprend l'état dicté par le défilement
-}
-function toggleResult(){ resultSheet.classList.contains('open') ? closeResult() : openResult(); }
-
-let rsDrag = null;
-rsPeek.addEventListener('pointerdown', e=>{
-  rsDrag = { y0:e.clientY, moved:false, wasOpen:resultSheet.classList.contains('open') };
-  rsPeek.setPointerCapture(e.pointerId);
-  resultSheet.classList.add('dragging');
-});
-rsPeek.addEventListener('pointermove', e=>{
-  if(!rsDrag) return;
-  const dy = e.clientY - rsDrag.y0;
-  if(Math.abs(dy) > 4) rsDrag.moved = true;
-  const h = resultSheet.offsetHeight;
-  const peek = parseFloat(getComputedStyle(resultSheet).getPropertyValue('--peek-h')) || 92;
-  const base = rsDrag.wasOpen ? 0 : (h - peek);
-  const y = Math.max(0, Math.min(h - peek, base + dy));
-  resultSheet.style.transform = `translateY(${y}px)`;
-});
-function endRsDrag(e){
-  if(!rsDrag) return;
-  resultSheet.classList.remove('dragging');
-  resultSheet.style.transform = '';
-  const dy = e.clientY - rsDrag.y0;
-  if(!rsDrag.moved){ toggleResult(); }
-  else if(dy < -40) openResult();
-  else if(dy > 40) closeResult();
-  rsDrag = null;
-}
-rsPeek.addEventListener('pointerup', endRsDrag);
-rsPeek.addEventListener('pointercancel', ()=>{
-  if(rsDrag){ resultSheet.classList.remove('dragging'); resultSheet.style.transform=''; rsDrag=null; }
-});
-
-/* ================= CASCADE CA -> RÉSULTAT NET ================= */
-function wfColors(){
-  const cs = getComputedStyle(document.documentElement);
-  const v = n => cs.getPropertyValue('--wf-'+n).trim();
-  return { construction:v(1), terrain:v(2), taxe:v(3),
-           interets:v(4), commercialisation:v(5), impot:v(6), net:v(7) };
-}
+/* segments et pastilles existent déjà : on ne met à jour que les valeurs,
+   sinon les transitions CSS ne joueraient jamais (éléments recréés) */
 function renderWaterfall(m){
-  const WF_COLORS = wfColors();
-  const parts = [
-    ['Construction',        m.ccons, WF_COLORS.construction],
-    ['Terrain',             m.cterr, WF_COLORS.terrain],
-    ['Taxe équipement',     m.taxe,  WF_COLORS.taxe],
-    ['Intérêts',            m.inter, WF_COLORS.interets],
-    ['Commercialisation',   m.comm,  WF_COLORS.commercialisation],
-    ['Impôt',               m.impot, WF_COLORS.impot],
-    ['Résultat net',        Math.max(0,m.rn), WF_COLORS.net],
-  ];
-  const total = parts.reduce((s,p)=>s+p[1],0);
-  const bar = $('wfBar'), leg = $('wfLegend');
-  if(!(total > 0)){ bar.innerHTML=''; leg.innerHTML=''; return; }
-  bar.innerHTML = parts.filter(p=>p[1]>0).map(p=>
-    `<div class="wf-seg" style="width:${(p[1]/total*100).toFixed(2)}%;background:${p[2]}" title="${p[0]}"></div>`
-  ).join('');
-  leg.innerHTML = parts.map(p=>
-    `<span class="wf-item"><span class="wf-chip" style="background:${p[2]}"></span>`+
-    `<span class="wf-name">${p[0]}</span>`+
-    `<span class="wf-val">${(p[1]/total*100).toFixed(1)}%</span></span>`
-  ).join('');
-}
-
-/* ================= DIAGNOSTIC VS REPÈRES GENEVOIS ================= */
-/* Chaque indicateur est situé sur une échelle, avec la fourchette usuelle
-   matérialisée, pour qu'un chiffre isolé devienne interprétable. */
-const DIAG = [
-  { name:'Rendement (TRI)', unit:'pct', min:0, max:0.30, band:[0.12,0.20],
-    get:(m,c)=> m.rann, dir:'high', thr:[0.10,0.15],
-    note:'Attendu en promotion : 12–20%/an selon le risque.' },
-
-  { name:'Marge nette', unit:'pct', min:0, max:0.30, band:[0.08,0.15],
-    get:(m,c)=> c.marge, dir:'high', thr:[0.08,0.15],
-    note:'Sous 8% du CA, un aléa de chantier suffit à effacer la marge.' },
-
-  { name:'Poids du terrain', unit:'pct', min:0, max:0.70, band:[0,0.30],
-    get:(m,c)=> c.poids, dir:'low', thr:[0.30,0.25],
-    note:'Au-delà de 25–30% du coût total, le foncier absorbe la marge.' },
-
-  { name:'Apport / coût total', unit:'pct', min:0, max:0.60, band:[0.20,0.40],
-    get:(m,c)=> c.partFP, dir:'high', thr:[0.15,0.20],
-    note:'Sous 15%, le montage est trop tendu pour la plupart des banques.' },
-
-  { name:'Coût de construction', unit:'chf', min:2000, max:6500, band:[3500,4800],
-    get:(m,c)=> c.ccM2, dir:'low', thr:[5200,4800],
-    note:'Ordre de grandeur genevois : 3 500–4 800 CHF/m² SBP (CFC 2).' },
-
-  { name:'Prix de vente', unit:'chf', min:6000, max:24000, band:[11000,18000],
-    get:(m,c)=> c.pv, dir:'high', thr:[10000,13000],
-    note:'Fourchette genevoise courante : 11 000–18 000 CHF/m².' },
-];
-
-function diagStatus(v, dir, thr){
-  if(!isFinite(v)) return 'na';
-  const [bad, good] = thr;
-  if(dir === 'high') return v >= good ? 'good' : (v >= bad ? 'ok' : 'warn');
-  return v <= good ? 'good' : (v <= bad ? 'ok' : 'warn');
-}
-const DIAG_WORDS = { good:'confortable', ok:'acceptable', warn:'à surveiller', na:'—' };
-
-function renderDiagnostic(m, ctx){
-  const el = $('diagCard');
-  if(!el) return;
-  el.innerHTML = DIAG.map(d=>{
-    const v = d.get(m, ctx);
-    const st = diagStatus(v, d.dir, d.thr);
-    const pos = isFinite(v) ? Math.max(0, Math.min(100, (v - d.min)/(d.max - d.min)*100)) : 0;
-    const bl = (d.band[0] - d.min)/(d.max - d.min)*100;
-    const bw = (d.band[1] - d.band[0])/(d.max - d.min)*100;
-    const shown = !isFinite(v) ? '—'
-      : (d.unit === 'pct' ? fmtPct(v) + (d.name.startsWith('Rendement') ? '/an' : '')
-                          : fmtInt(v) + ' CHF/m²');
-    return `<div class="diag-row">
-      <div class="diag-head">
-        <span class="diag-name">${d.name}</span>
-        <span class="diag-val ${st}">${shown}</span>
-      </div>
-      <div class="diag-track">
-        <span class="diag-band" style="left:${bl.toFixed(1)}%;width:${bw.toFixed(1)}%"></span>
-        <span class="diag-mark ${st}" style="left:${pos.toFixed(1)}%"></span>
-      </div>
-      <div class="diag-foot">
-        <span class="diag-tag ${st}">${DIAG_WORDS[st]}</span>
-        <span class="diag-note">${d.note}</span>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-/* ================= GLISSER POUR MODIFIER ================= */
-const SCRUB_STEP = {   // variation par pixel de déplacement
-  in_terrain:2500, in_parcelle:2, in_cc:10, in_pv:25,
-  in_duree:0.02, in_surface:2, in_logsize:0.5
-};
-function isLockedInput(el){ return el.disabled; }
-Object.keys(SCRUB_STEP).forEach(id=>{
-  const el = $(id); if(!el) return;
-  const field = el.closest('.field');
-  if(field) field.classList.add('scrubbable');
-  let st = null;
-  el.addEventListener('pointerdown', e=>{
-    if(isLockedInput(el)) return;
-    st = { x0:e.clientX, v0:parseNum(el.value), moved:false, id:e.pointerId };
+  const cs = getComputedStyle(document.documentElement);
+  if(!m){
+    WF.forEach(w => { $(`seg-${w.key}`).style.width = '0%'; setText(`pct-${w.key}`,'—'); });
+    return;
+  }
+  const vals = WF.map(w => Math.max(0, w.get(m)));
+  const tot = vals.reduce((a,b)=>a+b,0);
+  WF.forEach((w,i) => {
+    const col = cs.getPropertyValue(w.v).trim();
+    const pct = tot > 0 ? vals[i]/tot*100 : 0;
+    const seg = $(`seg-${w.key}`);
+    seg.style.width = pct.toFixed(2) + '%';
+    seg.style.backgroundColor = col;
+    $(`chip-${w.key}`).style.backgroundColor = col;
+    setText(`pct-${w.key}`, pct.toFixed(1) + '%');
   });
-  el.addEventListener('pointermove', e=>{
-    if(!st) return;
-    const dx = e.clientX - st.x0;
-    if(!st.moved && Math.abs(dx) < 5) return;
-    if(!st.moved){
-      st.moved = true;
-      el.setPointerCapture(st.id);
-      el.blur();
-      if(field) field.classList.add('scrubbing');
+}
+
+function renderDiag(r){
+  DIAG.forEach(d => {
+    const v = r ? d.get(r, S) : NaN;
+    const st = statusOf(v, d.dir, d.thr);
+    const [word, tone] = VERDICT[st === 'ok' ? 'ok' : st];
+    const val = $(`dgv-${d.key}`), mark = $(`dgm-${d.key}`), tag = $(`dgt-${d.key}`);
+    val.textContent = isFinite(v) ? d.fmt(v) : '—';
+    val.className = 'dg-val is-' + tone;
+    mark.className = 'dg-mark mk-' + tone;
+    mark.style.left = (isFinite(v) ? clamp((v-d.min)/(d.max-d.min)*100, 0, 100) : 0).toFixed(1) + '%';
+    tag.textContent = word;
+    tag.className = 'dg-tag bg-' + tone;
+  });
+}
+
+
+/* ==========================================================================
+   [JS-9] LIAISON DES CHAMPS
+   ========================================================================== */
+function fmtFieldValue(f, v){
+  if(f.fmt === 'pct') return v.toFixed(1) + '%';
+  if(f.fmt === 'ratio') return v.toFixed(2);
+  return String(v);
+}
+function writeField(f){
+  const input = $(`in-${f.key}`);
+  if(!input) return;
+  if(f.kind === 'slider'){
+    input.value = S[f.key];
+    setText(`val-${f.key}`, fmtFieldValue(f, S[f.key]));
+  } else if(f.kind === 'num'){
+    input.value = f.half ? Number(S[f.key]).toFixed(1) : fmtInt(S[f.key]);
+  }
+}
+function writeAllFields(){ FIELDS.forEach(writeField); $('fProject').value = S.project || ''; }
+
+function bindFields(){
+  FIELDS.forEach(f => {
+    const input = $(`in-${f.key}`);
+    if(!input) return;
+
+    if(f.kind === 'slider'){
+      input.addEventListener('input', () => {
+        S[f.key] = parseFloat(input.value);
+        setText(`val-${f.key}`, fmtFieldValue(f, S[f.key]));
+        render();
+      });
+      return;
     }
-    e.preventDefault();
-    let v = st.v0 + dx*SCRUB_STEP[id];
-    v = Math.max(id==='in_duree' ? 0.5 : 0, v);
-    el.value = (id==='in_duree') ? (Math.round(v*2)/2).toFixed(1) : fmtInt(v);
-    compute();
+    if(f.kind !== 'num') return;
+
+    input.addEventListener('input', () => { S[f.key] = num(input.value); render(); });
+    input.addEventListener('focus', () => input.select());
+    input.addEventListener('blur', () => {
+      S[f.key] = f.half ? Math.max(.5, Math.round(num(input.value)*2)/2) : num(input.value);
+      writeField(f); render();
+    });
+
+    // glisser-pour-modifier
+    if(f.scrub){
+      const box = $(`box-${f.key}`);
+      let st = null;
+      input.addEventListener('pointerdown', e => {
+        if(input.disabled) return;
+        st = { x:e.clientX, v:S[f.key], moved:false, id:e.pointerId };
+      });
+      input.addEventListener('pointermove', e => {
+        if(!st) return;
+        const dx = e.clientX - st.x;
+        if(!st.moved && Math.abs(dx) < 5) return;
+        if(!st.moved){ st.moved = true; input.setPointerCapture(st.id); input.blur(); box.classList.add('scrubbing'); }
+        e.preventDefault();
+        let v = st.v + dx*f.scrub;
+        v = Math.max(f.half ? .5 : 0, v);
+        S[f.key] = f.half ? Math.round(v*2)/2 : v;
+        writeField(f); render();
+      });
+      const end = () => { if(st && st.moved) box.classList.remove('scrubbing'); st = null; };
+      input.addEventListener('pointerup', end);
+      input.addEventListener('pointercancel', end);
+    }
   });
-  const endScrub = ()=>{
-    if(!st) return;
-    if(st.moved && field) field.classList.remove('scrubbing');
-    st = null;
-  };
-  el.addEventListener('pointerup', endScrub);
-  el.addEventListener('pointercancel', endScrub);
-});
 
-/* petite secousse du cadenas quand on tente de modifier une section verrouillée */
-function nudgeLock(btn){
+  $('fProject').addEventListener('input', () => { S.project = $('fProject').value; saveState(); });
+
+  const btnMax = $('btnMax');
+  if(btnMax) btnMax.addEventListener('click', () => {
+    if(S.locks.montants) return nudge($('lock-montants'));
+    if(S.parcelle > 0){ S.surface = Math.floor(S.parcelle*S.ius); writeField(BY_KEY.surface); render(); }
+  });
+}
+
+/* ==========================================================================
+   [JS-10] VERROUS
+   ========================================================================== */
+function applyLocks(){
+  SECTIONS.filter(s => s.lock).forEach(sec => {
+    const on = !!S.locks[sec.lock];
+    $(`lock-${sec.lock}`).textContent = on ? '🔒' : '🔓';
+    $(`card-${sec.id}`).classList.toggle('locked', on);
+    FIELDS.filter(f => f.sec === sec.id).forEach(f => {
+      const input = $(`in-${f.key}`);
+      if(input) input.disabled = on || (f.key === 'terrain' && S.mode === 'terrain');
+    });
+  });
+  // en mode Terrain, le prix est un résultat : jamais saisissable
+  const t = $('in-terrain');
+  if(t){ t.disabled = t.disabled || S.mode === 'terrain'; t.style.opacity = S.mode === 'terrain' ? '.45' : ''; }
+}
+function nudge(btn){
   if(!btn) return;
-  btn.animate(
-    [{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],
-    {duration:260, easing:'ease-in-out'}
-  );
+  btn.animate([{transform:'translateX(0)'},{transform:'translateX(-4px)'},{transform:'translateX(4px)'},{transform:'translateX(0)'}],
+              {duration:260, easing:'ease-in-out'});
+}
+function bindLocks(){
+  SECTIONS.filter(s => s.lock).forEach(sec => {
+    $(`lock-${sec.lock}`).addEventListener('click', () => {
+      S.locks[sec.lock] = !S.locks[sec.lock];
+      applyLocks(); saveState();
+    });
+  });
+  // tenter de bouger un curseur verrouillé secoue le cadenas
+  SECTIONS.filter(s => s.lock).forEach(sec => {
+    $(`card-${sec.id}`).addEventListener('pointerdown', e => {
+      if(S.locks[sec.lock] && e.target.closest('input')) nudge($(`lock-${sec.lock}`));
+    }, true);
+  });
 }
 
-/* ---------- pager horizontal ---------- */
-const pager = $('pager');
-const shell = $('scrollRoot');
-const pageEls = Array.from(document.querySelectorAll('.page'));
-const pageDots = Array.from(document.querySelectorAll('.page-dot'));
-const pageCount = pageEls.length;
-
-function currentPage(){
-  return Math.max(0, Math.min(pageCount-1, Math.round(pager.scrollLeft / pager.clientWidth)));
+/* ==========================================================================
+   [JS-11] MODES
+   ========================================================================== */
+const MODE_ORDER = ['objectif','terrain','surface'];
+function applyMode(){
+  document.documentElement.dataset.mode = S.mode;
+  $('modesThumb').style.transform = `translateX(${Math.max(0, MODE_ORDER.indexOf(S.mode))*100}%)`;
+  document.querySelectorAll('.modes button').forEach(b => b.classList.toggle('on', b.dataset.mode === S.mode));
+  FIELDS.filter(f => f.modes).forEach(f => {
+    const row = $(`row-${f.key}`);
+    if(row) row.classList.toggle('hide', !f.modes.includes(S.mode));
+  });
+  // une section dont tous les champs sont masqués disparaît, titre compris
+  SECTIONS.forEach(sec => {
+    const fields = FIELDS.filter(f => f.sec === sec.id && f.kind !== 'gauge');
+    const visible = fields.some(f => !f.modes || f.modes.includes(S.mode));
+    const head = $(`sec-${sec.id}`), card = $(`card-${sec.id}`);
+    if(head) head.style.display = visible ? '' : 'none';
+    if(card) card.style.display = visible ? '' : 'none';
+  });
+  applyLocks();
+  requestAnimationFrame(measureGain);   // la zone figée change de hauteur selon le mode
 }
-function syncDots(){
-  const i = currentPage();
-  pageDots.forEach((d,k)=> d.classList.toggle('active', k === i));
+function bindModes(){
+  document.querySelectorAll('.modes button').forEach(b => {
+    b.addEventListener('click', () => {
+      S.mode = b.dataset.mode;
+      Roll.setInstant(true);            // changement de mode : bascule sèche
+      applyMode(); render();
+      Roll.setInstant(false);
+    });
+  });
 }
-function goToPage(i){
-  const idx = Math.max(0, Math.min(pageCount-1, i));
-  pager.scrollTo({ left: idx * pager.clientWidth, behavior:'smooth' });
-}
-pageDots.forEach(d=> d.addEventListener('click', ()=> goToPage(parseInt(d.dataset.goto,10))));
 
-/* --- compactage de la zone fixe au défilement vertical --- */
-const COMPACT_ON = 44, COMPACT_OFF = 12;   // hystérésis : évite le clignotement
-
-/* Hauteur regagnée par la page lorsque la zone fixe se replie.
-   Mesurée en désactivant les transitions, sinon on lirait une valeur en cours d'animation. */
+/* ==========================================================================
+   [JS-12] PAGINATION ET COMPACTAGE
+   ========================================================================== */
+const shell = $('shell'), pager = $('pager'), sheet = $('sheet');
+let pageEls = [];
+const COMPACT_ON = 44, COMPACT_OFF = 12;
 let COMPACT_GAIN = 0;
-function measureCompactGain(){
-  const wasCompact = shell.classList.contains('compact');
+
+function currentPage(){ return clamp(Math.round(pager.scrollLeft/pager.clientWidth), 0, pageEls.length-1); }
+function goToPage(i){ pager.scrollTo({ left: clamp(i,0,pageEls.length-1)*pager.clientWidth, behavior:'smooth' }); }
+/* les chevrons ne s'affichent que du côté où une page existe */
+function syncArrows(){
+  const i = currentPage();
+  $('turnPrev').classList.toggle('off', i <= 0);
+  $('turnNext').classList.toggle('off', i >= pageEls.length-1);
+}
+
+/* hauteur regagnée par le repli : dépend du mode, mesurée transitions figées */
+function measureGain(){
+  const was = shell.classList.contains('compact');
   shell.classList.add('measuring');
   shell.classList.remove('compact');
-  const hOpen = pager.clientHeight;
+  const open = pager.clientHeight;
   shell.classList.add('compact');
-  const hCompact = pager.clientHeight;
-  shell.classList.toggle('compact', wasCompact);
-  void shell.offsetHeight;                 // force le recalcul avant de réactiver les transitions
+  const shut = pager.clientHeight;
+  shell.classList.toggle('compact', was);
+  void shell.offsetHeight;
   shell.classList.remove('measuring');
-  COMPACT_GAIN = Math.max(0, hCompact - hOpen);
+  COMPACT_GAIN = Math.max(0, shut - open);
 }
-
+function measureChrome(){
+  document.documentElement.style.setProperty('--peek-h', $('peek').offsetHeight + 'px');
+}
 function updateCompact(){
-  // panneau Résultat ouvert : on reste en format compact
-  if(resultSheet.classList.contains('open')){ shell.classList.add('compact'); return; }
-  const el = pageEls[currentPage()];
-  if(!el) return;
-  const y = el.scrollTop;
-  const isCompact = shell.classList.contains('compact');
-
-  if(!isCompact){
-    // Ne se replier que si la page a assez de matière pour rester défilée une fois repliée.
-    // Sinon le défilement retomberait à 0, annulant le repli : c'est ce qui provoquait le rebond.
-    const overflow = el.scrollHeight - el.clientHeight;
-    // après repli il doit rester assez de course pour que le défilement
-    // ne retombe pas sous le seuil de sortie (sinon : rebond)
-    if(y > COMPACT_ON && overflow > COMPACT_GAIN + COMPACT_OFF + 20) shell.classList.add('compact');
-  } else {
+  if(sheet.classList.contains('open')){ shell.classList.add('compact'); return; }
+  const p = pageEls[currentPage()];
+  if(!p) return;
+  const y = p.scrollTop;
+  if(shell.classList.contains('compact')){
     if(y < COMPACT_OFF) shell.classList.remove('compact');
-  }
-}
-/* --- masquage du hero + alerte selon le SENS du défilement ---
-   vers le bas : on efface le résultat et l'alerte pour dégager la page,
-   vers le haut (ou retour en tête) : ils reviennent. */
-const HERO_MIN   = 56;   // il faut avoir défilé un peu avant d'effacer
-const HERO_DELTA = 6;    // gestes plus courts ignorés : pas de clignotement
-let HERO_GAIN = 0;       // hauteur que la page regagne une fois le hero effacé
-let heroLockUntil = 0;   // pendant la transition, le scrollTop bouge tout seul
-const heroLastY = new WeakMap();
-
-function measureHeroGain(){
-  const wasHidden = shell.classList.contains('hero-hidden');
-  shell.classList.add('measuring');
-  shell.classList.remove('hero-hidden');
-  const hShown = pager.clientHeight;
-  shell.classList.add('hero-hidden');
-  const hHidden = pager.clientHeight;
-  shell.classList.toggle('hero-hidden', wasHidden);
-  void shell.offsetHeight;                 // recalcul avant de réactiver les transitions
-  shell.classList.remove('measuring');
-  HERO_GAIN = Math.max(0, hHidden - hShown);
-}
-
-/* L'alerte fait partie de ce qu'on efface : quand elle apparaît ou disparaît,
-   la hauteur regagnée change, donc on la remesure. */
-let alertWasShown = null;
-function syncAlertHeight(){
-  const on = $('alertBox').classList.contains('show');
-  if(on === alertWasShown) return;
-  alertWasShown = on;
-  measureHeroGain();
-}
-
-function setHeroHidden(on){
-  if(shell.classList.contains('hero-hidden') === on) return;
-  shell.classList.toggle('hero-hidden', on);
-  // la page grandit/rétrécit : le navigateur ré-ajuste scrollTop pendant l'animation.
-  // On gèle la détection de sens le temps que ça se stabilise.
-  heroLockUntil = performance.now() + 420;
-}
-
-function updateHeroHide(){
-  const el = pageEls[currentPage()];
-  if(!el) return;
-  const y = el.scrollTop;
-
-  // panneau Résultat ouvert : il recouvre déjà le hero, on ne touche à rien
-  if(resultSheet.classList.contains('open')){ heroLastY.set(el, y); return; }
-
-  if(y <= HERO_DELTA){ heroLastY.set(el, y); setHeroHidden(false); return; }
-  if(performance.now() < heroLockUntil){ heroLastY.set(el, y); return; }
-
-  const prev = heroLastY.has(el) ? heroLastY.get(el) : 0;
-  const d = y - prev;
-  if(Math.abs(d) < HERO_DELTA) return;     // on garde le repère : les petits pas s'additionnent
-  heroLastY.set(el, y);
-
-  if(d > 0){
-    // n'effacer que si la page reste défilée après coup, sinon elle remonte
-    // toute seule en tête et le hero réapparaît aussitôt (rebond)
-    const overflow = el.scrollHeight - el.clientHeight;
-    if(y > HERO_MIN && overflow > HERO_GAIN + 40) setHeroHidden(true);
   } else {
-    setHeroHidden(false);
+    // il doit rester assez de course après repli, sinon le défilement
+    // retomberait à zéro et annulerait le repli : c'est la cause du rebond
+    const over = p.scrollHeight - p.clientHeight;
+    if(y > COMPACT_ON && over > COMPACT_GAIN + COMPACT_OFF + 20) shell.classList.add('compact');
   }
 }
+function bindPager(){
+  pageEls = Array.from(document.querySelectorAll('.page'));
+  $('turnPrev').addEventListener('click', () => goToPage(currentPage()-1));
+  $('turnNext').addEventListener('click', () => goToPage(currentPage()+1));
+  let raf = null;
+  const onScroll = () => { if(raf) return; raf = requestAnimationFrame(() => { syncArrows(); updateCompact(); raf = null; }); };
+  pager.addEventListener('scroll', onScroll, {passive:true});
+  pageEls.forEach(p => p.addEventListener('scroll', onScroll, {passive:true}));
+  document.addEventListener('keydown', e => {
+    if(e.target.matches('input,textarea')) return;
+    if(e.key === 'ArrowRight') goToPage(currentPage()+1);
+    if(e.key === 'ArrowLeft')  goToPage(currentPage()-1);
+  });
+  let lastW = pager.clientWidth, at = 0;
+  setInterval(() => { if(pager.clientWidth === lastW) at = currentPage(); }, 400);
+  window.addEventListener('resize', () => {
+    if(pager.clientWidth !== lastW){
+      pager.scrollLeft = at*pager.clientWidth; lastW = pager.clientWidth;
+      layoutBands(); syncArrows();
+    }
+    measureChrome(); measureGain();
+  });
+}
 
-let compactRaf = null;
-pageEls.forEach(el=>{
-  el.addEventListener('scroll', ()=>{
-    if(compactRaf) return;
-    compactRaf = requestAnimationFrame(()=>{ updateCompact(); updateHeroHide(); compactRaf = null; });
-  }, {passive:true});
-});
+/* ==========================================================================
+   [JS-13] PANNEAU RÉSULTAT
+   ========================================================================== */
+function openSheet(){ sheet.classList.add('open'); shell.classList.add('compact'); }
+function closeSheet(){ sheet.classList.remove('open'); updateCompact(); }
+function bindSheet(){
+  const peek = $('peek');
+  let drag = null;
+  peek.addEventListener('pointerdown', e => {
+    drag = { y:e.clientY, moved:false, was:sheet.classList.contains('open') };
+    peek.setPointerCapture(e.pointerId);
+    sheet.classList.add('drag');
+  });
+  peek.addEventListener('pointermove', e => {
+    if(!drag) return;
+    const dy = e.clientY - drag.y;
+    if(Math.abs(dy) > 4) drag.moved = true;
+    const h = sheet.offsetHeight;
+    const peekH = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--peek-h')) || 92;
+    sheet.style.transform = `translateY(${clamp((drag.was ? 0 : h-peekH) + dy, 0, h-peekH)}px)`;
+  });
+  const end = e => {
+    if(!drag) return;
+    sheet.classList.remove('drag'); sheet.style.transform = '';
+    const dy = (e.clientY ?? drag.y) - drag.y;
+    if(!drag.moved) sheet.classList.contains('open') ? closeSheet() : openSheet();
+    else if(dy < -40) openSheet();
+    else if(dy > 40) closeSheet();
+    drag = null;
+  };
+  peek.addEventListener('pointerup', end);
+  peek.addEventListener('pointercancel', () => { if(drag){ sheet.classList.remove('drag'); sheet.style.transform=''; drag=null; } });
+}
 
-let dotRaf = null;
-pager.addEventListener('scroll', ()=>{
-  if(dotRaf) return;
-  dotRaf = requestAnimationFrame(()=>{ syncDots(); updateCompact(); updateHeroHide(); dotRaf = null; });
-}, {passive:true});
-
-/* --- navigation clavier (ordinateur) --- */
-document.addEventListener('keydown', e=>{
-  if(e.target.matches('input, textarea')) return;
-  if(e.key === 'ArrowRight') goToPage(currentPage()+1);
-  if(e.key === 'ArrowLeft')  goToPage(currentPage()-1);
-});
-
-/* --- réalignement au redimensionnement (scrollend absent sur Safari) --- */
-let lastW = pager.clientWidth;
-let pageAtResize = 0;
-setInterval(()=>{ if(pager.clientWidth === lastW) pageAtResize = currentPage(); }, 400);
-window.addEventListener('resize', ()=>{
-  if(pager.clientWidth !== lastW){
-    pager.scrollLeft = pageAtResize * pager.clientWidth;
-    lastW = pager.clientWidth;
-    layoutUsualBands();
-    syncDots();
+/* ==========================================================================
+   [JS-14] THÈME
+   ========================================================================== */
+let themeTimer = null;
+function setTheme(t, animate){
+  if(animate){
+    document.documentElement.classList.add('theming');
+    if(themeTimer) clearTimeout(themeTimer);
+    themeTimer = setTimeout(() => document.documentElement.classList.remove('theming'), 320);
   }
-});
+  document.documentElement.dataset.theme = t;
+  Store.set(K_THEME, t);
+  renderWaterfall(project(S).m || null);
+}
 
-/* ---------- init ---------- */
-let initialTheme = 'dark';
-try{ initialTheme = localStorage.getItem(THEME_KEY) || 'dark'; }catch(e){}
-setTheme(initialTheme);
+/* ==========================================================================
+   [JS-15] PROJETS CLASSÉS ET COMPARAISON
+   ========================================================================== */
+function loadHistory(){ try{ return JSON.parse(Store.get(K_HIST) || '[]'); }catch(e){ return []; } }
+function saveHistory(list){ Store.set(K_HIST, JSON.stringify(list)); }
+let selection = [];
 
-const saved = loadState();
-if(saved) applyState(saved);
-else { applyModeUI(); applyLockUI(); }
-compute();
-layoutUsualBands();
-syncDots();
-measureChrome();
-requestAnimationFrame(()=>{ measureChrome(); measureCompactGain(); measureHeroGain(); });
+function openDrawer(){ $('scrim').classList.add('open'); $('drawer').classList.add('open'); renderHistory(); }
+function closeDrawer(){ $('scrim').classList.remove('open'); $('drawer').classList.remove('open'); }
+
+function renderHistory(){
+  const list = loadHistory(), host = $('drawerList');
+  host.innerHTML = '';
+  selection = selection.filter(id => list.some(h => h.id === id));
+  const n = selection.length;
+  $('btnCompare').disabled = n < 2;
+  $('btnCompare').textContent = n >= 2 ? `Comparer (${n})` : 'Comparer';
+  setText('drawerHint', n === 0 ? 'Coche 2 ou 3 projets pour les comparer.'
+        : n === 1 ? 'Coche au moins un autre projet.' : `${n} projets sélectionnés.`);
+
+  if(!list.length){
+    host.appendChild(el('div','empty','Aucun projet classé pour l\'instant.'));
+    return;
+  }
+  list.forEach(entry => {
+    const row = el('div','hist');
+    const chk = el('button','hist-check' + (selection.includes(entry.id) ? ' on' : ''), '✓');
+    const main = el('div','hist-main');
+    main.appendChild(el('div','hist-label', entry.label));
+    main.appendChild(el('div','hist-date', entry.ts));
+    const del = el('button','hist-del','🗑');
+    chk.addEventListener('click', e => {
+      e.stopPropagation();
+      const i = selection.indexOf(entry.id);
+      if(i >= 0) selection.splice(i,1);
+      else if(selection.length < 3) selection.push(entry.id);
+      renderHistory();
+    });
+    main.addEventListener('click', () => {
+      S = Object.assign(defaults(), entry.state);
+      writeAllFields(); applyMode(); applyLocks();
+      Roll.setInstant(true); render(); Roll.setInstant(false);
+      closeDrawer();
+    });
+    del.addEventListener('click', e => {
+      e.stopPropagation();
+      saveHistory(loadHistory().filter(h => h.id !== entry.id));
+      renderHistory();
+    });
+    row.appendChild(chk); row.appendChild(main); row.appendChild(del);
+    host.appendChild(row);
+  });
+}
+
+const CMP_ROWS = [
+  ['Surface',            r => fmtInt(r.S)+' m²',                    null],
+  ['Durée',              (r,st) => Number(st.duree).toFixed(1)+' ans', null],
+  ['Terrain',            r => fmtCHF(r.m.land),  'low',  r => r.m.land],
+  ['Coût total',         r => fmtCHF(r.m.total), 'low',  r => r.m.total],
+  ['Apport',             r => fmtCHF(r.m.eq),    'low',  r => r.m.eq],
+  ["Chiffre d'affaires", r => fmtCHF(r.m.ca),    'high', r => r.m.ca],
+  ['Résultat net',       r => fmtCHF(r.m.net),   'high', r => r.m.net],
+  ['Rendement (TRI)',    r => fmtPct(r.m.tri)+'/an','high', r => r.m.tri],
+  ['Marge (% CA)',       r => fmtPct(r.marge),   'high', r => r.marge],
+  ['Poids terrain',      r => fmtPct(r.poids),   'low',  r => r.poids],
+];
+
+function openCompare(){
+  const list = loadHistory().filter(h => selection.includes(h.id));
+  const cols = list.map(h => {
+    const st = Object.assign(defaults(), h.state);
+    return { label:h.label, st, r:project(st) };
+  }).filter(c => c.r.ok);
+
+  const body = $('cmpBody');
+  body.innerHTML = '';
+  if(cols.length < 2){
+    body.appendChild(el('div','empty','Ces projets ne peuvent pas être recalculés.'));
+  } else {
+    const t = el('table','cmp');
+    const thead = el('thead'); const hr = el('tr'); hr.appendChild(el('th'));
+    cols.forEach(c => hr.appendChild(el('th', null, c.label)));
+    thead.appendChild(hr); t.appendChild(thead);
+    const tb = el('tbody');
+    CMP_ROWS.forEach(([name, fmt, dir, raw]) => {
+      const tr = el('tr'); tr.appendChild(el('td', null, name));
+      let best = -1, worst = -1;
+      if(dir && raw){
+        const vals = cols.map(c => raw(c.r)).map((v,i) => ({v,i})).filter(o => isFinite(o.v));
+        if(vals.length > 1){
+          const s = [...vals].sort((a,b) => dir === 'high' ? b.v-a.v : a.v-b.v);
+          best = s[0].i; worst = s[s.length-1].i;
+        }
+      }
+      cols.forEach((c,i) => {
+        const td = el('td', i === best ? 'is-good' : (i === worst ? 'is-bad' : null), fmt(c.r, c.st));
+        tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+    t.appendChild(tb); body.appendChild(t);
+  }
+  $('cmpOverlay').classList.add('open');
+}
+
+/* ==========================================================================
+   [JS-16] CLASSER UN PROJET
+   ========================================================================== */
+function openModal(){
+  const typed = (S.project || '').trim();
+  const fallback = S.mode === 'objectif'
+    ? `Projet ${$('heroVal').dataset.roll || ''} m²`.replace('  ',' ')
+    : `Projet ${new Date().toLocaleDateString('fr-CH')}`;
+  $('modalInput').value = typed || fallback;
+  $('modalInput').placeholder = fallback;
+  $('modal').classList.add('open');
+  setTimeout(() => { $('modalInput').focus(); $('modalInput').select(); }, 50);
+}
+function closeModal(){ $('modal').classList.remove('open'); }
+function confirmFile(){
+  const name = ($('modalInput').value.trim() || $('modalInput').placeholder);
+  S.project = name;
+  $('fProject').value = name;
+  const list = loadHistory();
+  list.unshift({ id:Date.now(), ts:new Date().toLocaleString('fr-CH',{day:'2-digit',month:'2-digit',year:'2-digit',hour:'2-digit',minute:'2-digit'}),
+                 label:name, state:JSON.parse(JSON.stringify(S)) });
+  if(list.length > 20) list.length = 20;
+  saveHistory(list); saveState(); closeModal();
+  const b = $('btnFile'), old = b.textContent;
+  b.textContent = `✓ « ${name} » classé`;
+  setTimeout(() => { b.textContent = old; }, 1800);
+}
+
+/* ==========================================================================
+   [JS-17] DÉMARRAGE
+   ========================================================================== */
+function bindGlobal(){
+  $('btnTheme').addEventListener('click', () =>
+    setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark', true));
+  $('btnMenu').addEventListener('click', openDrawer);
+  $('scrim').addEventListener('click', closeDrawer);
+  $('btnDrawerClose').addEventListener('click', closeDrawer);
+  $('btnCompare').addEventListener('click', openCompare);
+  $('btnCmpClose').addEventListener('click', () => $('cmpOverlay').classList.remove('open'));
+  $('btnFile').addEventListener('click', openModal);
+  $('btnModalCancel').addEventListener('click', closeModal);
+  $('btnModalSave').addEventListener('click', confirmFile);
+  $('modal').addEventListener('click', e => { if(e.target.id === 'modal') closeModal(); });
+  $('modalInput').addEventListener('keydown', e => {
+    if(e.key === 'Enter') confirmFile();
+    if(e.key === 'Escape') closeModal();
+  });
+  $('btnReset').addEventListener('click', () => {
+    S = defaults(); Store.del(K_STATE);
+    writeAllFields(); applyMode(); applyLocks();
+    Roll.setInstant(true); render(); Roll.setInstant(false);
+  });
+
+  // un chiffre ne change jamais sans son roulement : pendant un glissement
+  // on retient la valeur, on la joue au relâchement
+  document.addEventListener('pointerdown', e => {
+    if(e.target.matches('input[type=range]') || e.target.closest('.f-box')) Roll.setDragging(true);
+  }, true);
+  const stop = () => Roll.setDragging(false);
+  document.addEventListener('pointerup', stop, true);
+  document.addEventListener('pointercancel', stop, true);
+
+  // recalage des bandes après le changement d'échelle du rectangle
+  document.addEventListener('transitionend', e => {
+    if(e.target.classList?.contains('hero-val') && e.propertyName === 'font-size') Roll.repaintHero();
+  }, true);
+}
+
+function boot(){
+  buildUI();
+  bindFields(); bindLocks(); bindModes(); bindPager(); bindSheet(); bindGlobal();
+
+  setTheme(Store.get(K_THEME) || 'dark', false);
+  const saved = loadState();
+  if(saved) S = saved;
+
+  writeAllFields();
+  applyMode(); applyLocks();
+  Roll.setInstant(true); render(); Roll.setInstant(false);
+
+  syncArrows(); measureChrome(); measureGain();
+  requestAnimationFrame(() => { measureChrome(); measureGain(); });
+}
+boot();
 </script>
-
 </body>
 </html>
