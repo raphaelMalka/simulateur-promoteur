@@ -16,6 +16,9 @@
 @property --acc-b    { syntax:'<color>'; inherits:true; initial-value:#4D70FF; }
 @property --acc-halo { syntax:'<color>'; inherits:true; initial-value:rgba(138,90,246,.20); }
 @property --acc-glow { syntax:'<color>'; inherits:true; initial-value:rgba(77,112,255,.60); }
+/* progression du repli du rectangle : 0 = déployé, 1 = réduit.
+   Déclarée comme nombre pour pouvoir être interpolée quand on l'anime. */
+@property --shrink { syntax:'<number>'; inherits:true; initial-value:0; }
 
 :root{
   --bg:#0B0B0F;
@@ -104,6 +107,7 @@ button{ font-family:inherit; }
 }
 
 .shell{
+  --shrink:0;
   position:relative;
   height:100%;
   display:flex; flex-direction:column; overflow:hidden;
@@ -134,17 +138,21 @@ button{ font-family:inherit; }
 }
 .page::-webkit-scrollbar{ display:none; }
 
+/* Le repli rend de la hauteur à la page, ce qui raccourcirait sa course de
+   défilement et ferait osciller le rectangle. Cette cale compense exactement
+   la hauteur regagnée : la course reste constante. */
+.spacer{ height:calc(var(--shrink) * var(--gain, 0px)); flex-shrink:0; }
+
 /* ==========================================================================
    [CSS-4] ENTÊTE
    ========================================================================== */
 .head{
   display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
-  padding:26px 22px 6px;
-  max-height:120px; opacity:1; overflow:hidden;
-  transition:max-height .28s cubic-bezier(.4,0,.2,1), opacity .2s ease,
-             padding-top .28s ease, padding-bottom .28s ease;
+  overflow:hidden;
+  padding:calc(26px * (1 - var(--shrink))) 22px calc(6px * (1 - var(--shrink)));
+  max-height:calc(120px * (1 - var(--shrink)));
+  opacity:calc(1 - var(--shrink));
 }
-.shell.compact .head{ max-height:0; opacity:0; padding-top:0; padding-bottom:0; }
 
 .head-title{ font-size:26px; font-weight:800; letter-spacing:-.02em; margin:4px 0 0; }
 .head-acts{ display:flex; gap:8px; margin-top:2px; flex-shrink:0; }
@@ -176,12 +184,11 @@ html[data-theme="light"] .icon-moon{ display:inline; }
    [CSS-5] SÉLECTEUR DE MODE
    ========================================================================== */
 .modes{
-  position:relative; margin:16px 20px 0; padding:4px;
+  position:relative; margin:0 20px; padding:4px;
   display:flex;
   background:var(--surface); border:1px solid var(--stroke); border-radius:16px;
-  transition:margin .28s ease;
+  margin-top:calc(10px + 6px * (1 - var(--shrink)));
 }
-.shell.compact .modes{ margin-top:10px; }
 .modes-thumb{
   position:absolute; top:4px; bottom:4px; left:4px;
   width:calc((100% - 8px)/3); border-radius:12px;
@@ -203,12 +210,14 @@ html[data-theme="light"] .icon-moon{ display:inline; }
    ========================================================================== */
 .hero{
   position:relative; overflow:hidden;
-  margin:14px 20px 8px; padding:26px 24px 24px;
+  margin:calc(10px + 4px * (1 - var(--shrink))) 20px calc(4px + 4px * (1 - var(--shrink)));
+  padding:calc(14px + 12px * (1 - var(--shrink)))
+          calc(20px + 4px * (1 - var(--shrink)))
+          calc(15px + 9px * (1 - var(--shrink)));
   border-radius:var(--r-l);
   background:var(--grad);
   box-shadow:0 20px 40px -18px var(--acc-glow);
-  transition:padding .28s cubic-bezier(.4,0,.2,1), margin .28s ease,
-             background .35s ease, box-shadow .35s ease;
+  transition:background .35s ease, box-shadow .35s ease;
 }
 .hero.mute{ background:linear-gradient(135deg,#3A3C46,#24252C); box-shadow:0 20px 40px -18px rgba(0,0,0,.5); }
 .hero::after{ content:""; position:absolute; right:-40px; top:-60px; width:180px; height:180px; border-radius:50%; background:rgba(255,255,255,.10); }
@@ -217,17 +226,18 @@ html[data-theme="light"] .icon-moon{ display:inline; }
 .hero-label{
   font-size:13px; font-weight:600; color:rgba(255,255,255,.85);
   text-transform:uppercase; letter-spacing:.06em;
-  max-height:40px; opacity:1; overflow:hidden;
-  transition:max-height .28s ease, opacity .2s ease, margin .28s ease;
+  overflow:hidden;
+  max-height:calc(40px * (1 - var(--shrink)));
+  opacity:calc(1 - var(--shrink));
 }
 .hero-val{
   display:flex; align-items:baseline; gap:8px;
   margin:6px 0 2px; line-height:1;
-  font-family:var(--mono); font-size:52px; font-weight:800; letter-spacing:-.03em; color:#fff;
-  transition:font-size .28s cubic-bezier(.4,0,.2,1);
+  font-family:var(--mono); font-weight:800; letter-spacing:-.03em; color:#fff;
+  font-size:calc(34px + 18px * (1 - var(--shrink)));
 }
 .hero-val .unit{ font-family:'Inter',sans-serif; font-size:20px; font-weight:700; opacity:.85; }
-.hero-sub{ margin-top:10px; transition:margin .28s ease; }
+.hero-sub{ margin-top:calc(6px + 4px * (1 - var(--shrink))); }
 .hero-badge{
   display:inline-flex; align-items:center; gap:5px;
   padding:5px 10px; border-radius:20px;
@@ -236,11 +246,6 @@ html[data-theme="light"] .icon-moon{ display:inline; }
 .hero-badge .pip{ width:6px; height:6px; border-radius:50%; background:var(--good); }
 .hero-badge.mute{ background:rgba(0,0,0,.28); }
 .hero-badge.mute .pip{ background:var(--bad); }
-
-.shell.compact .hero{ padding:14px 20px 15px; margin:10px 20px 4px; }
-.shell.compact .hero-val{ font-size:34px; }
-.shell.compact .hero-label{ max-height:0; opacity:0; margin:0; }
-.shell.compact .hero-sub{ margin-top:6px; }
 
 /* ==========================================================================
    [CSS-7] ROULEAUX DE CHIFFRES
@@ -340,12 +345,12 @@ input[type=range]{
 input[type=range]::-webkit-slider-thumb{
   -webkit-appearance:none; width:20px; height:20px; border-radius:50%;
   margin-top:-8px; background:#fff; cursor:pointer;
-  box-shadow:0 2px 8px rgba(0,0,0,.4), 0 0 0 5px var(--acc-halo);
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
 }
 input[type=range]::-moz-range-thumb{
   width:20px; height:20px; border-radius:50%; border:none;
   background:#fff; cursor:pointer;
-  box-shadow:0 2px 8px rgba(0,0,0,.4), 0 0 0 5px var(--acc-halo);
+  box-shadow:0 2px 8px rgba(0,0,0,.4);
 }
 
 /* jauge de surface */
@@ -521,7 +526,7 @@ input[type=range]::-moz-range-thumb{
 /* ==========================================================================
    [CSS-17] ACTIONS DE BAS DE PANNEAU
    ========================================================================== */
-.actions{ margin:26px 20px 0; }
+.actions{ margin:26px 20px 0; display:flex; flex-direction:column; gap:10px; }
 .btn-primary{
   width:100%; padding:16px; border:none; border-radius:16px;
   background:var(--grad); color:#fff; font-size:15px; font-weight:700; cursor:pointer;
@@ -530,6 +535,14 @@ input[type=range]::-moz-range-thumb{
   transition:background .35s ease, box-shadow .35s ease, transform .1s ease;
 }
 .btn-primary:active{ transform:scale(.98); }
+.btn-secondary{
+  width:100%; padding:14px; border-radius:16px;
+  background:var(--surface); border:1px solid var(--stroke); color:var(--text);
+  font-size:14px; font-weight:700; cursor:pointer;
+  display:flex; align-items:center; justify-content:center; gap:8px;
+  transition:background .2s ease, transform .1s ease;
+}
+.btn-secondary:active{ background:var(--surface-2); transform:scale(.98); }
 .btn-ghost{
   margin:20px auto 0; display:block;
   padding:11px 22px; border-radius:14px;
@@ -565,6 +578,92 @@ input[type=range]::-moz-range-thumb{
 }
 .note-strong{ color:var(--text-dim) !important; }
 .note-strong b{ color:var(--text); font-weight:700; }
+
+/* ==========================================================================
+   [CSS-17bis] SYNTHÈSE IMPRIMABLE
+   ========================================================================== */
+.synth{ padding:22px 20px 40px; color:var(--text); }
+.synth-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:4px; }
+.synth-project{ font-size:20px; font-weight:800; letter-spacing:-.01em; }
+.synth-sub{ margin-top:3px; font-size:12px; color:var(--text-dim); }
+.synth-mode{
+  flex-shrink:0; padding:6px 12px; border-radius:20px;
+  background:var(--grad); color:#fff; font-size:11.5px; font-weight:700;
+}
+
+.synth-hero{
+  display:grid; grid-template-columns:1fr 1fr 1fr; gap:1px;
+  margin:18px 0; border-radius:var(--r-m); overflow:hidden;
+  background:var(--stroke);
+}
+.synth-stat{ background:var(--surface); padding:16px 12px; text-align:center; }
+.synth-stat-label{ font-size:10.5px; font-weight:600; color:var(--text-dim); text-transform:uppercase; letter-spacing:.04em; }
+.synth-stat-val{ margin-top:6px; font-family:var(--mono); font-size:19px; font-weight:800; color:var(--text); }
+.synth-stat-val.accent{ color:var(--good); }
+
+.synth-verdict{
+  display:flex; align-items:center; gap:10px;
+  margin:0 0 20px; padding:12px 14px; border-radius:14px;
+  background:var(--surface-2); border:1px solid var(--stroke);
+  font-size:13px; color:var(--text-dim);
+}
+.synth-verdict b{ color:var(--text); }
+.synth-verdict .dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+
+.synth-h{ margin:24px 0 10px; font-size:13px; font-weight:700; color:var(--text); }
+.synth-h:first-of-type{ margin-top:0; }
+
+/* barre d'utilisation du chiffre d'affaires — même lecture que la cascade */
+.synth-bar{ display:flex; width:100%; height:30px; border-radius:9px; overflow:hidden; background:var(--surface-2); }
+.synth-bar-seg{ height:100%; }
+.synth-legend{ display:flex; flex-wrap:wrap; gap:6px 16px; margin-top:12px; }
+.synth-legend-item{ display:flex; align-items:center; gap:7px; font-size:11.5px; }
+.synth-chip{ width:9px; height:9px; border-radius:3px; }
+.synth-legend-name{ color:var(--text-dim); }
+.synth-legend-val{ font-family:var(--mono); font-weight:700; color:var(--text); }
+
+/* financement : qui paie quoi, en un coup d'œil */
+.synth-fin{ display:flex; height:38px; border-radius:10px; overflow:hidden; }
+.synth-fin-seg{ display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; color:#fff; }
+.synth-fin-labels{ display:flex; justify-content:space-between; margin-top:8px; font-size:11.5px; color:var(--text-dim); }
+
+.synth-table{ width:100%; border-collapse:collapse; font-size:13px; }
+.synth-table tr{ border-bottom:1px solid var(--stroke); }
+.synth-table tr:last-child{ border-bottom:none; }
+.synth-table td{ padding:9px 0; }
+.synth-table td:first-child{ color:var(--text-dim); }
+.synth-table td:last-child{ text-align:right; font-family:var(--mono); font-weight:600; color:var(--text); }
+.synth-table tr.strong td{ font-weight:800; color:var(--text); }
+
+.synth-diag{ display:flex; flex-wrap:wrap; gap:8px; }
+.synth-tag{
+  padding:7px 12px; border-radius:20px; font-size:11.5px; font-weight:700;
+  display:flex; align-items:center; gap:6px;
+}
+.synth-tag .dot{ width:7px; height:7px; border-radius:50%; }
+
+.synth-foot{ margin-top:26px; padding-top:14px; border-top:1px solid var(--stroke); font-size:10.5px; color:var(--text-faint); line-height:1.6; }
+
+/* impression : uniquement la synthèse, mise en page papier.
+   Les couleurs du thème sombre restent actives sous #synthOverlay tant
+   qu'on ne les réécrit pas ici : sans ça, textes et cartes gardent leurs
+   teintes claires sur fond blanc et deviennent illisibles au papier. */
+@media print{
+  body *{ visibility:hidden; }
+  #synthOverlay, #synthOverlay *{ visibility:visible; }
+  #synthOverlay{
+    position:absolute; inset:0; opacity:1; transform:none; overflow:visible;
+    --text:#14151A; --text-dim:#6B6D78; --text-faint:#9A9CA6;
+    --surface:#FFFFFF; --surface-2:#F0F1F5; --stroke:#DADCE3;
+    --good:#0E9D6E; --warn:#B0741A; --bad:#D4504A;
+    background:#fff; color:#14151A;
+  }
+  .no-print{ display:none !important; }
+  .synth{ padding:0; }
+  .synth-stat, .synth-verdict, .synth-fin-seg, .synth-mode, .synth-chip, .synth-tag, .dg-mark{
+    -webkit-print-color-adjust:exact; print-color-adjust:exact;
+  }
+}
 
 /* ==========================================================================
    [CSS-18] SURFACES FLOTTANTES : historique, comparaison, modale
@@ -669,6 +768,7 @@ input[type=range]::-moz-range-thumb{
 .modal-btn.go{ background:var(--grad); color:#fff; }
 
 /* mesure : fige les animations le temps de lire une hauteur */
+.shell.anim{ transition:--shrink .3s cubic-bezier(.4,0,.2,1); }
 .shell.measuring, .shell.measuring *{ transition:none !important; animation:none !important; }
 </style>
 </head>
@@ -774,7 +874,10 @@ input[type=range]::-moz-range-thumb{
           <div class="line"><span class="line-k">Impôt sur les sociétés</span><span class="line-v neg" id="oImpot">—</span></div>
         </div>
 
-        <div class="actions"><button class="btn-primary" id="btnFile">📂 Classer le projet</button></div>
+        <div class="actions">
+          <button class="btn-primary" id="btnFile">📂 Classer le projet</button>
+          <button class="btn-secondary" id="btnSynth">📄 Synthèse à imprimer / partager</button>
+        </div>
         <button class="btn-ghost" id="btnReset">Réinitialiser les valeurs par défaut</button>
         <div class="autosave"><span class="pip"></span><span>Enregistré automatiquement sur cet appareil</span></div>
 
@@ -811,6 +914,19 @@ input[type=range]::-moz-range-thumb{
         <button class="x-btn" id="btnCmpClose">✕</button>
       </div>
       <div class="overlay-body" id="cmpBody"></div>
+    </div>
+
+    <!-- SYNTHÈSE -->
+    <div class="overlay" id="synthOverlay">
+      <div class="overlay-head no-print">
+        <span class="drawer-title">Synthèse</span>
+        <div class="drawer-acts">
+          <button class="cmp-btn" id="btnSynthShare">Partager</button>
+          <button class="cmp-btn" id="btnSynthPrint">Imprimer</button>
+          <button class="x-btn" id="btnSynthClose">✕</button>
+        </div>
+      </div>
+      <div class="overlay-body" id="synthBody"></div>
     </div>
 
     <div class="modal" id="modal">
@@ -1278,6 +1394,9 @@ function buildUI(){
     host.appendChild(card);
   });
 
+  // cale de compensation en fin de page (voir .spacer)
+  pageNodes.forEach(p => p.appendChild(el('div','spacer')));
+
   // cascade : segments créés une fois, seules les largeurs changent ensuite
   WF.forEach(w => {
     const seg = el('div','wf-seg'); seg.id = `seg-${w.key}`; seg.title = w.name;
@@ -1536,17 +1655,54 @@ function writeField(f){
 }
 function writeAllFields(){ FIELDS.forEach(writeField); $('fProject').value = S.project || ''; }
 
+
+/* ==========================================================================
+   [JS-9bis] RETOUR HAPTIQUE
+   navigator.vibrate n'existe que sur mobile (surtout Android) et exige un
+   vrai geste utilisateur : on l'appelle directement depuis les gestionnaires
+   de pointeur/entrée, jamais depuis render(). Cadencé pour donner la
+   sensation d'un cliquet plutôt qu'un bourdonnement continu.
+   ========================================================================== */
+const Haptic = (() => {
+  const supported = typeof navigator !== 'undefined' && typeof navigator.vibrate === 'function';
+  let last = 0;
+  return {
+    tick(ms = 6){
+      if(!supported) return;
+      const now = performance.now();
+      if(now - last < 45) return;      // cadence : un cliquet perceptible, pas un bourdonnement
+      last = now;
+      navigator.vibrate(ms);
+    },
+    bump(ms = 16){                     // franchissement de repère / borne : plus marqué
+      if(!supported) return;
+      last = performance.now();
+      navigator.vibrate(ms);
+    }
+  };
+})();
+
 function bindFields(){
   FIELDS.forEach(f => {
     const input = $(`in-${f.key}`);
     if(!input) return;
 
     if(f.kind === 'slider'){
+      let wasUsual = null;
       input.addEventListener('input', () => {
         S[f.key] = parseFloat(input.value);
         setText(`val-${f.key}`, fmtFieldValue(f, S[f.key]));
+        if(f.usual){
+          const inUsual = S[f.key] >= f.usual[0] && S[f.key] <= f.usual[1];
+          if(wasUsual !== null && inUsual !== wasUsual) Haptic.bump();  // on franchit la fourchette usuelle
+          else Haptic.tick();
+          wasUsual = inUsual;
+        } else {
+          Haptic.tick();
+        }
         render();
       });
+      input.addEventListener('pointerdown', () => { wasUsual = null; });
       return;
     }
     if(f.kind !== 'num') return;
@@ -1574,7 +1730,9 @@ function bindFields(){
         e.preventDefault();
         let v = st.v + dx*f.scrub;
         v = Math.max(f.half ? .5 : 0, v);
+        const prev = S[f.key];
         S[f.key] = f.half ? Math.round(v*2)/2 : v;
+        if(S[f.key] !== prev) Haptic.tick();
         writeField(f); render();
       });
       const end = () => { if(st && st.moved) box.classList.remove('scrubbing'); st = null; };
@@ -1668,11 +1826,14 @@ function bindModes(){
    ========================================================================== */
 const shell = $('shell'), pager = $('pager'), sheet = $('sheet');
 let pageEls = [];
-const COMPACT_ON = 44, COMPACT_OFF = 12;
-let COMPACT_GAIN = 0;
+const SHRINK_RANGE = 90;      // course de défilement qui replie entièrement le rectangle
+let GAIN = 0;                 // hauteur regagnée par le repli complet
+let shrink = 0;               // progression courante, 0 → 1
+let syncing = false;          // vrai pendant un alignement programmatique
 
 function currentPage(){ return clamp(Math.round(pager.scrollLeft/pager.clientWidth), 0, pageEls.length-1); }
 function goToPage(i){ pager.scrollTo({ left: clamp(i,0,pageEls.length-1)*pager.clientWidth, behavior:'smooth' }); }
+
 /* les chevrons ne s'affichent que du côté où une page existe */
 function syncArrows(){
   const i = currentPage();
@@ -1680,44 +1841,75 @@ function syncArrows(){
   $('turnNext').classList.toggle('off', i >= pageEls.length-1);
 }
 
+function setShrink(v, animate){
+  v = clamp(v, 0, 1);
+  if(Math.abs(v - shrink) < 0.001) return;
+  shrink = v;
+  if(animate){
+    shell.classList.add('anim');
+    clearTimeout(setShrink._t);
+    setShrink._t = setTimeout(() => shell.classList.remove('anim'), 340);
+  } else {
+    shell.classList.remove('anim');
+  }
+  shell.style.setProperty('--shrink', shrink.toFixed(4));
+}
+
 /* hauteur regagnée par le repli : dépend du mode, mesurée transitions figées */
 function measureGain(){
-  const was = shell.classList.contains('compact');
+  const keep = shrink;
   shell.classList.add('measuring');
-  shell.classList.remove('compact');
+  shell.style.setProperty('--shrink','0');
   const open = pager.clientHeight;
-  shell.classList.add('compact');
+  shell.style.setProperty('--shrink','1');
   const shut = pager.clientHeight;
-  shell.classList.toggle('compact', was);
+  shell.style.setProperty('--shrink', keep.toFixed(4));
   void shell.offsetHeight;
   shell.classList.remove('measuring');
-  COMPACT_GAIN = Math.max(0, shut - open);
+  GAIN = Math.max(0, shut - open);
+  shell.style.setProperty('--gain', GAIN + 'px');
 }
+
 function measureChrome(){
   document.documentElement.style.setProperty('--peek-h', $('peek').offsetHeight + 'px');
 }
-function updateCompact(){
-  if(sheet.classList.contains('open')){ shell.classList.add('compact'); return; }
+
+/* Le défilement vertical de la page active pilote le repli, en continu. */
+function onPageScroll(){
+  if(syncing || sheet.classList.contains('open')) return;
   const p = pageEls[currentPage()];
   if(!p) return;
-  const y = p.scrollTop;
-  if(shell.classList.contains('compact')){
-    if(y < COMPACT_OFF) shell.classList.remove('compact');
-  } else {
-    // il doit rester assez de course après repli, sinon le défilement
-    // retomberait à zéro et annulerait le repli : c'est la cause du rebond
-    const over = p.scrollHeight - p.clientHeight;
-    if(y > COMPACT_ON && over > COMPACT_GAIN + COMPACT_OFF + 20) shell.classList.add('compact');
-  }
+  if(p.scrollHeight - p.clientHeight < 4) return;   // page sans course : ne pilote rien
+  setShrink(p.scrollTop / SHRINK_RANGE, false);
 }
+
+/* Au changement de page, la taille du rectangle est conservée : on aligne la
+   nouvelle page sur le repli courant au lieu de recalculer depuis son défilement. */
+function syncPageToShrink(){
+  const p = pageEls[currentPage()];
+  if(!p) return;
+  const want = shrink * SHRINK_RANGE;
+  const max = Math.max(0, p.scrollHeight - p.clientHeight);
+  syncing = true;
+  p.scrollTop = Math.min(want, max);
+  requestAnimationFrame(() => { syncing = false; });
+}
+
 function bindPager(){
   pageEls = Array.from(document.querySelectorAll('.page'));
   $('turnPrev').addEventListener('click', () => goToPage(currentPage()-1));
   $('turnNext').addEventListener('click', () => goToPage(currentPage()+1));
-  let raf = null;
-  const onScroll = () => { if(raf) return; raf = requestAnimationFrame(() => { syncArrows(); updateCompact(); raf = null; }); };
-  pager.addEventListener('scroll', onScroll, {passive:true});
-  pageEls.forEach(p => p.addEventListener('scroll', onScroll, {passive:true}));
+  let raf = null, settle = null;
+  pageEls.forEach(p => p.addEventListener('scroll', () => {
+    if(raf) return;
+    raf = requestAnimationFrame(() => { onPageScroll(); raf = null; });
+  }, {passive:true}));
+  // balayage horizontal : on garde la taille courante et on y aligne la page d'arrivée
+  pager.addEventListener('scroll', () => {
+    syncArrows();
+    clearTimeout(settle);
+    settle = setTimeout(syncPageToShrink, 120);
+  }, {passive:true});
   document.addEventListener('keydown', e => {
     if(e.target.matches('input,textarea')) return;
     if(e.key === 'ArrowRight') goToPage(currentPage()+1);
@@ -1737,8 +1929,12 @@ function bindPager(){
 /* ==========================================================================
    [JS-13] PANNEAU RÉSULTAT
    ========================================================================== */
-function openSheet(){ sheet.classList.add('open'); shell.classList.add('compact'); }
-function closeSheet(){ sheet.classList.remove('open'); updateCompact(); }
+function openSheet(){ sheet.classList.add('open'); setShrink(1, true); }
+function closeSheet(){
+  sheet.classList.remove('open');
+  const p = pageEls[currentPage()];
+  if(p && p.scrollHeight - p.clientHeight >= 4) setShrink(p.scrollTop/SHRINK_RANGE, true);
+}
 function bindSheet(){
   const peek = $('peek');
   let drag = null;
@@ -1889,6 +2085,182 @@ function openCompare(){
 }
 
 /* ==========================================================================
+   [JS-15bis] SYNTHÈSE À IMPRIMER OU PARTAGER
+   Une vue à part, pensée pour être lue en 10 secondes ou tenir sur une page
+   imprimée — pas pour reprendre chaque ligne du panneau détaillé.
+   ========================================================================== */
+const MODE_TITLES = { objectif:'Surface à construire', terrain:'Prix maximum du terrain', surface:'Rendement obtenu' };
+
+function synthText(f, v){ return isFinite(v) ? f(v) : '—'; }
+
+function buildSynthesis(){
+  const r = project(S);
+  const host = $('synthBody');
+  host.innerHTML = '';
+  const wrap = el('div','synth');
+
+  // en-tête : projet, date, mode
+  const head = el('div','synth-head');
+  const left = el('div');
+  left.appendChild(el('div','synth-project', S.project?.trim() || 'Projet sans nom'));
+  left.appendChild(el('div','synth-sub', `Simulation du ${new Date().toLocaleDateString('fr-CH',{day:'2-digit',month:'long',year:'numeric'})} — Promotion Genève`));
+  head.appendChild(left);
+  head.appendChild(el('span','synth-mode', MODE_TITLES[S.mode]));
+  wrap.appendChild(head);
+
+  if(!r.ok){
+    wrap.appendChild(el('div','synth-verdict', `Ce projet n'est pas réalisable avec les hypothèses actuelles : ${r.why}`));
+    host.appendChild(wrap);
+    return;
+  }
+  const m = r.m;
+
+  // trois chiffres clés, adaptés au mode
+  const hero = el('div','synth-hero');
+  const stat = (label, val, accent) => {
+    const s = el('div','synth-stat');
+    s.appendChild(el('div','synth-stat-label', label));
+    s.appendChild(el('div','synth-stat-val' + (accent ? ' accent' : ''), val));
+    return s;
+  };
+  hero.appendChild(stat('Surface', fmtInt(r.S) + ' m²'));
+  hero.appendChild(stat(S.mode === 'terrain' ? 'Terrain max' : 'Terrain', fmtCHF(m.land)));
+  hero.appendChild(stat('Rendement (TRI)', isFinite(m.tri) ? fmtPct(m.tri) + '/an' : '—', true));
+  wrap.appendChild(hero);
+
+  // verdict en une phrase, dérivé du diagnostic
+  const scored = DIAG.map(d => ({ d, st: statusOf(d.get(r,S), d.dir, d.thr) }));
+  const bad = scored.filter(x => x.st === 'bad');
+  const ok = scored.filter(x => x.st === 'ok');
+  const verdict = el('div','synth-verdict');
+  const vdot = el('span','dot');
+  let vtext;
+  if(bad.length){
+    vdot.style.background = 'var(--bad)';
+    vtext = `<b>${bad.length} point${bad.length>1?'s':''} à surveiller</b> : ${bad.map(x=>x.d.name.toLowerCase()).join(', ')}.`;
+  } else if(ok.length){
+    vdot.style.background = 'var(--warn)';
+    vtext = `Projet <b>globalement raisonnable</b>, avec ${ok.length} indicateur${ok.length>1?'s':''} juste en limite : ${ok.map(x=>x.d.name.toLowerCase()).join(', ')}.`;
+  } else {
+    vdot.style.background = 'var(--good)';
+    vtext = `Projet <b>confortable sur tous les indicateurs</b> suivis (rendement, marge, poids du terrain, apport).`;
+  }
+  const vspan = el('span'); vspan.innerHTML = vtext;
+  verdict.appendChild(vdot); verdict.appendChild(vspan);
+  wrap.appendChild(verdict);
+
+  // utilisation du chiffre d'affaires — même code couleur que la cascade
+  wrap.appendChild(el('div','synth-h', "Utilisation du chiffre d'affaires"));
+  const cs = getComputedStyle(document.documentElement);
+  const vals = WF.map(w => Math.max(0, w.get(m)));
+  const tot = vals.reduce((a,b)=>a+b,0);
+  const bar = el('div','synth-bar');
+  const legend = el('div','synth-legend');
+  WF.forEach((w,i) => {
+    const col = cs.getPropertyValue(w.v).trim();
+    const pct = tot > 0 ? vals[i]/tot*100 : 0;
+    const seg = el('div','synth-bar-seg'); seg.style.cssText = `width:${pct}%;background:${col}`;
+    bar.appendChild(seg);
+    const item = el('span','synth-legend-item');
+    const chip = el('span','synth-chip'); chip.style.background = col;
+    item.appendChild(chip);
+    item.appendChild(el('span','synth-legend-name', w.name + ' '));
+    item.appendChild(el('span','synth-legend-val', pct.toFixed(0) + '%'));
+    legend.appendChild(item);
+  });
+  wrap.appendChild(bar); wrap.appendChild(legend);
+
+  // qui finance : fonds propres vs banque
+  wrap.appendChild(el('div','synth-h', 'Qui finance le projet'));
+  const fp = m.total > 0 ? m.eq/m.total*100 : 0;
+  const fin = el('div','synth-fin');
+  const segEq = el('div','synth-fin-seg', fp>18 ? `Fonds propres ${fp.toFixed(0)}%` : '');
+  segEq.style.cssText = `width:${fp}%;background:var(--acc-a)`;
+  const segCr = el('div','synth-fin-seg', (100-fp)>18 ? `Banque ${(100-fp).toFixed(0)}%` : '');
+  segCr.style.cssText = `width:${100-fp}%;background:var(--acc-b)`;
+  fin.appendChild(segEq); fin.appendChild(segCr);
+  wrap.appendChild(fin);
+  const finLabels = el('div','synth-fin-labels');
+  finLabels.appendChild(el('span', null, `Apport : ${fmtCHF(m.eq)}`));
+  finLabels.appendChild(el('span', null, `Crédit : ${fmtCHF(m.debt)}`));
+  wrap.appendChild(finLabels);
+
+  // tableau des chiffres clés
+  wrap.appendChild(el('div','synth-h', 'Chiffres clés'));
+  const table = el('table','synth-table');
+  const rows = [
+    ['Chiffre d\'affaires', fmtCHF(m.ca)],
+    ['Coût total du projet', fmtCHF(m.total)],
+    ['Résultat net', fmtCHF(m.net), true],
+    ['Rendement annualisé (TRI)', isFinite(m.tri) ? fmtPct(m.tri)+'/an' : '—', true],
+    ['Marge nette (% du CA)', fmtPct(r.marge)],
+    ['Poids du terrain (% du coût)', fmtPct(r.poids)],
+    ['Nombre de logements (est.)', r.lots + ' lots'],
+    ['Durée du projet', Number(S.duree).toFixed(1) + ' ans'],
+  ];
+  rows.forEach(([k,v,strong]) => {
+    const tr = el('tr', strong ? 'strong' : null);
+    tr.appendChild(el('td', null, k)); tr.appendChild(el('td', null, v));
+    table.appendChild(tr);
+  });
+  wrap.appendChild(table);
+
+  // diagnostic condensé en étiquettes
+  wrap.appendChild(el('div','synth-h', 'Diagnostic vs repères genevois'));
+  const tags = el('div','synth-diag');
+  scored.forEach(({d,st}) => {
+    const tone = st === 'ok' ? 'warn' : st;
+    const [word] = VERDICT[st === 'ok' ? 'ok' : st];
+    const tag = el('span','synth-tag bg-' + tone);
+    const dot = el('span','dot'); dot.style.background = `var(--${tone === 'none' ? 'text-faint' : tone})`;
+    tag.appendChild(dot);
+    tag.appendChild(el('span', null, `${d.name} : ${word}`));
+    tags.appendChild(tag);
+  });
+  wrap.appendChild(tags);
+
+  wrap.appendChild(el('div','synth-foot',
+    "Simulation indicative, réalisée à partir d'hypothèses saisies par l'utilisateur (TRI simplifié sur flux semestriels). " +
+    "Ne remplace pas un plan financier détaillé. Généré par le Simulateur de promotion — Genève."));
+
+  host.appendChild(wrap);
+}
+
+function synthSummaryText(){
+  const r = project(S);
+  const name = S.project?.trim() || 'Projet sans nom';
+  if(!r.ok) return `${name} — non réalisable avec les hypothèses actuelles (${r.why}).`;
+  const m = r.m;
+  return [
+    `${name} — ${MODE_TITLES[S.mode]}`,
+    `Surface : ${fmtInt(r.S)} m² · Terrain : ${fmtCHF(m.land)} · Durée : ${Number(S.duree).toFixed(1)} ans`,
+    `Rendement (TRI) : ${isFinite(m.tri) ? fmtPct(m.tri)+'/an' : '—'} · Résultat net : ${fmtCHF(m.net)} · Marge : ${fmtPct(r.marge)}`,
+    `Chiffre d'affaires : ${fmtCHF(m.ca)} · Coût total : ${fmtCHF(m.total)}`,
+  ].join('\n');
+}
+
+function openSynthesis(){ buildSynthesis(); $('synthOverlay').classList.add('open'); }
+function closeSynthesis(){ $('synthOverlay').classList.remove('open'); }
+
+async function shareSynthesis(){
+  const text = synthSummaryText();
+  const title = (S.project?.trim() || 'Projet') + ' — Simulateur de promotion';
+  if(navigator.share){
+    try{ await navigator.share({ title, text }); return; }catch(e){ /* annulé par l'utilisateur : rien à faire */ return; }
+  }
+  try{
+    await navigator.clipboard.writeText(text);
+    toast($('btnSynthShare'), 'Résumé copié ✓');
+  }catch(e){
+    toast($('btnSynthShare'), 'Partage indisponible');
+  }
+}
+function toast(btn, msg){
+  const old = btn.textContent; btn.textContent = msg;
+  setTimeout(() => { btn.textContent = old; }, 1600);
+}
+
+/* ==========================================================================
    [JS-16] CLASSER UN PROJET
    ========================================================================== */
 function openModal(){
@@ -1927,6 +2299,10 @@ function bindGlobal(){
   $('btnDrawerClose').addEventListener('click', closeDrawer);
   $('btnCompare').addEventListener('click', openCompare);
   $('btnCmpClose').addEventListener('click', () => $('cmpOverlay').classList.remove('open'));
+  $('btnSynth').addEventListener('click', openSynthesis);
+  $('btnSynthClose').addEventListener('click', closeSynthesis);
+  $('btnSynthPrint').addEventListener('click', () => window.print());
+  $('btnSynthShare').addEventListener('click', shareSynthesis);
   $('btnFile').addEventListener('click', openModal);
   $('btnModalCancel').addEventListener('click', closeModal);
   $('btnModalSave').addEventListener('click', confirmFile);
